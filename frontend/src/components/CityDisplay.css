@@ -1,0 +1,223 @@
+/*============================================================================
+  CityDisplay.css - ERP Unified Blue & White Theme
+  Standardized Display Page Styles - WIDE LAYOUT
+  ============================================================================*/
+
+.standard-display {
+    width: 100%;
+    margin: 0;
+    background: #f0f6ff;
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
+.screen-title {
+    background: linear-gradient(135deg, #1f4fb2 0%, #2a5ea0 100%);
+    color: #fff;
+    padding: 12px 20px;
+    font-weight: bold;
+    font-size: 18px;
+    text-align: center;
+}
+
+.container {
+    padding: 10px;
+    width: calc(100% - 20px);
+    overflow: visible;
+}
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: visible;
+    overflow-y: auto;
+    max-height: calc(100vh - 250px);
+    background: #fff;
+    border: 1px solid #ddd;
+}
+
+.data-table {
+    width: 100%;
+    min-width: 1200px;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.data-table th {
+    background: #1f4fb2;
+    padding: 10px 8px;
+    border: 1px solid #ddd;
+    font-weight: bold;
+    color: #fff;
+    font-size: 13px;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.data-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+.data-table tbody tr:hover {
+    background: #e8f0ff;
+}
+
+.actions-header {
+    width: 200px;
+    text-align: center;
+}
+
+.actions-cell {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.action-btn {
+    padding: 4px 10px;
+    margin: 2px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    transition: all 0.2s;
+}
+
+.action-btn.update-btn {
+    background: #ff9800;
+}
+
+.action-btn.update-btn:hover {
+    background: #f57c00;
+}
+
+.action-btn.delete-btn {
+    background: #f44336;
+}
+
+.action-btn.delete-btn:hover {
+    background: #d32f2f;
+}
+
+.action-btn.print-btn {
+    background: #2196f3;
+}
+
+.action-btn.print-btn:hover {
+    background: #1976d2;
+}
+
+.footer-bar {
+    background: #e8f0ff;
+    padding: 10px 20px;
+    font-size: 14px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+}
+
+.modal {
+    background: #fff;
+    padding: 18px;
+    border-radius: 6px;
+    min-width: 320px;
+    max-width: 720px;
+    border: 1px solid #ddd;
+}
+
+.modal h3 {
+    margin-top: 0;
+    color: #1f4fb2;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.modal-body label {
+    font-weight: 600;
+}
+
+.modal-body input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f0f0f0;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #999;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #1f4fb2;
+}
+
+/* Print Styles */
+@media print {
+    .screen-title {
+        background: white;
+        color: black;
+        border-bottom: 2px solid black;
+    }
+    
+    .data-table {
+        font-size: 11px;
+    }
+    
+    .data-table th {
+        background: #f0f0f0 !important;
+        color: black !important;
+        border: 1px solid black;
+    }
+    
+    .data-table td {
+        border: 1px solid black;
+    }
+    
+    .action-btn {
+        display: none;
+    }
+    
+    .footer-bar {
+        display: none;
+    }
+}

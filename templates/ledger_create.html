@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Ledger</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #E6F0FA; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #005F99; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background-color: #005F99; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #004080; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Ledger</h1>
+        <form action="/ledger_create" method="post">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="printname">Print Name</label>
+                <input type="text" id="printname" name="printname">
+            </div>
+            <div class="form-group">
+                <label for="under">Under</label>
+                <select id="under" name="under">
+                    <option value="Assets">Assets</option>
+                    <option value="Liabilities">Liabilities</option>
+                    <option value="Income">Income</option>
+                    <option value="Expenses">Expenses</option>
+                    <option value="Capital">Capital</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="openingbalance">Opening Balance</label>
+                <input type="number" id="openingbalance" name="openingbalance" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="area">Area</label>
+                <input type="text" id="area" name="area">
+            </div>
+            <div class="form-group">
+                <label for="credit">Credit</label>
+                <input type="number" id="credit" name="credit" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="debit">Debit</label>
+                <input type="number" id="debit" name="debit" step="0.01">
+            </div>
+            <button type="submit">Save Ledger</button>
+        </form>
+    </div>
+</body>
+</html>

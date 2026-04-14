@@ -1,0 +1,28 @@
+{
+  "name": "bvc-erp",
+  "version": "1.0.0",
+  "description": "BVC ERP - Purchase Management System (Standalone Desktop Application)",
+  "main": "src-tauri/src/main.rs",
+  "scripts": {
+    "dev": "npm run tauri dev",
+    "build": "npm run tauri build",
+    "build:frontend": "cd frontend && npm run build",
+    "build:tauri": "npm run tauri build",
+    "tauri": "tauri",
+    "start": "concurrently \"node backend/server.js\" \"npm run frontend\"",
+    "frontend": "cd frontend && npm run dev",
+    "both": "concurrently -n BACKEND,FRONTEND -c green,blue \"node backend/server.js\" \"cd frontend && npm run dev\"",
+    "start:server": "node backend/server.js",
+    "postinstall": "cd frontend && npm install"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@tauri-apps/cli": "^1.5.0",
+    "concurrently": "^8.2.0"
+  },
+  "author": "",
+  "license": "MIT"
+}

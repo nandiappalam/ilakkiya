@@ -1,0 +1,21 @@
+API Fix Complete
+
+## Summary of Changes Made
+
+### 1. Frontend API Configuration (frontend/src/config/api.js)
+- Changed API_BASE_URL from 'http://localhost:3000/api' to '/api'
+- This ensures Vite proxy handles routing correctly
+
+### 2. Server Routes (backend/server.js)
+- All routes properly configured with weightConversion and salesExportOrders
+
+### 3. Report Routes Error Handling (backend/routes/reports.js)
+- Added tableExists() helper function to check if tables exist
+- Added error handling: stock-status and lots routes now return [] instead of 500 errors
+
+## Root Cause
+The frontend was calling http://localhost:5173/api/... (Vite dev server) instead of http://localhost:3000/api/... (Express backend). Using relative path '/api' allows Vite proxy to forward requests to Express.
+
+## To Run
+Terminal 1: cd backend && node server.js
+Terminal 2: cd frontend && npm run dev

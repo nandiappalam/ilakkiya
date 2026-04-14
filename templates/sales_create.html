@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Sales Entry</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #E6F0FA; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #005F99; text-align: center; margin-bottom: 30px; }
+        .header { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .header div { flex: 1; min-width: 200px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #005F99; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        input:focus, select:focus { border-color: #005F99; outline: none; }
+        .items { margin-top: 20px; }
+        .item-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; align-items: end; }
+        .item-row div { flex: 1; min-width: 120px; }
+        .item-row div:last-child { flex: 0 0 auto; }
+        button { background-color: #005F99; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        button:hover { background-color: #004080; }
+        button.remove { background-color: #f44336; }
+        button.remove:hover { background-color: #d32f2f; }
+        .actions { margin-top: 20px; text-align: center; }
+        @media (max-width: 768px) {
+            .header, .item-row { flex-direction: column; }
+            .header div, .item-row div { min-width: auto; }
+            .container { padding: 10px; }
+            h1 { font-size: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Sales Entry</h1>
+        <form action="/sales_create" method="post">
+            <div class="header">
+                <div>
+                    <label for="s_no">S.No</label>
+                    <input type="number" id="s_no" name="s_no" required>
+                </div>
+                <div>
+                    <label for="date">Date</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                <div>
+                    <label for="customer">Customer</label>
+                    <input type="text" id="customer" name="customer" required>
+                </div>
+                <div>
+                    <label for="remarks">Remarks</label>
+                    <input type="text" id="remarks" name="remarks">
+                </div>
+            </div>
+            <div class="items">
+                <h2>Sales Items</h2>
+                <div id="item-rows">
+                    <div class="item-row">
+                        <div><label>Item Name</label><input type="text" name="item_name[]"></div>
+                        <div><label>Lot No</label><input type="text" name="lot_no[]"></div>
+                        <div><label>Weight</label><input type="number" step="0.01" name="weight[]"></div>
+                        <div><label>Qty</label><input type="number" step="0.01" name="qty[]"></div>
+                        <div><label>Total Wt</label><input type="number" step="0.01" name="total_wt[]"></div>
+                        <div><label>Rate</label><input type="number" step="0.01" name="rate[]"></div>
+                        <div><label>Disc %</label><input type="number" step="0.01" name="disc_perc[]"></div>
+                        <div><label>Tax %</label><input type="number" step="0.01" name="tax_perc[]"></div>
+                        <div><label>Total Amt</label><input type="number" step="0.01" name="total_amt[]"></div>
+                    </div>
+                </div>
+                <button type="button" onclick="addRow()">Add Row</button>
+            </div>
+            <button type="submit">Save Sales</button>
+        </form>
+    </div>
+    <script>
+        function addRow() {
+            const row = document.querySelector('.item-row').cloneNode(true);
+            row.querySelectorAll('input').forEach(input => input.value = '');
+            document.getElementById('item-rows').appendChild(row);
+        }
+    </script>
+</body>
+</html>

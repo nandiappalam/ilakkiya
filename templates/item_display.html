@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Items</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #E6F0FA; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #005F99; text-align: center; }
+        .search { margin-bottom: 20px; }
+        .search input { padding: 8px; width: 200px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #005F99; color: white; }
+        button { background-color: #005F99; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #004080; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Item List</h1>
+        <div class="search">
+            <label>Search: <input type="text" id="search" placeholder="Search items..."></label>
+        </div>
+        <table id="itemsTable">
+            <thead>
+                <tr>
+                    <th>Item Code</th>
+                    <th>Item Name</th>
+                    <th>Print Name</th>
+                    <th>Item Group</th>
+                    <th>Tax (%)</th>
+                    <th>HSN Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Items will be loaded here -->
+            </tbody>
+        </table>
+        <br>
+        <button onclick="exportExcel()">Export Excel</button>
+        <button onclick="printTable()">Print</button>
+    </div>
+
+    <script>
+        // Load items from API
+        async function loadItems() {
+            try {
+                const response = await fetch('/api/masters/item_master');
+                const items = await response.json();
+                const tbody = document.querySelector('#itemsTable tbody');
+                tbody.innerHTML = '';
+                items.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.item_code}</td>
+                        <td>${item.item_name}</td>
+                        <td>${item.print_name || ''}</td>
+                        <td>${item.item_group || ''}</td>
+                        <td>${item.tax || ''}</td>
+                        <td>${item.hsn_code || ''}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading items:', error);
+            }
+        }
+
+        // Search functionality
+        document.getElementById('search').addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#itemsTable tbody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+
+        // Export to Excel
+        function exportExcel() {
+            // Implementation for Excel export
+            alert('Excel export functionality would be implemented here');
+        }
+
+        // Print table
+        function printTable() {
+            window.print();
+        }
+
+        // Load items on page load
+        loadItems();
+    </script>
+</body>
+</html>

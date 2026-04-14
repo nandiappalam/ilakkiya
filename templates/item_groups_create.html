@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Item Group</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #E6F0FA; margin: 0; padding: 20px; }
+        .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #005F99; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background-color: #005F99; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #004080; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Item Group</h1>
+        <form action="/item_groups_create" method="post">
+            <div class="form-group">
+                <label for="group_code">Group Code</label>
+                <input type="text" id="group_code" name="group_code" required>
+            </div>
+            <div class="form-group">
+                <label for="group_name">Group Name</label>
+                <input type="text" id="group_name" name="group_name" required>
+            </div>
+            <div class="form-group">
+                <label for="print_name">Print Name</label>
+                <input type="text" id="print_name" name="print_name">
+            </div>
+            <div class="form-group">
+                <label for="tax">Tax (%)</label>
+                <input type="number" id="tax" name="tax" step="0.01">
+            </div>
+            <button type="submit">Save Item Group</button>
+        </form>
+    </div>
+</body>
+</html>

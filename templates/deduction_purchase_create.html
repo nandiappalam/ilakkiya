@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Deduction (Purchase)</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #E6F0FA; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #005F99; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { background-color: #005F99; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #004080; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Deduction (Purchase)</h1>
+        <form action="/deduction_purchase_create" method="post">
+            <div class="form-group">
+                <label for="ded_code">Deduction Code</label>
+                <input type="text" id="ded_code" name="ded_code" required>
+            </div>
+            <div class="form-group">
+                <label for="ded_name">Deduction Name</label>
+                <input type="text" id="ded_name" name="ded_name" required>
+            </div>
+            <div class="form-group">
+                <label for="print_name">Print Name</label>
+                <input type="text" id="print_name" name="print_name">
+            </div>
+            <div class="form-group">
+                <label for="debit_adjust">Debit Adjust</label>
+                <input type="text" id="debit_adjust" name="debit_adjust">
+            </div>
+            <div class="form-group">
+                <label for="account_head">Account Head</label>
+                <input type="text" id="account_head" name="account_head">
+            </div>
+            <div class="form-group">
+                <label for="credit_adjust">Credit Adjust</label>
+                <input type="text" id="credit_adjust" name="credit_adjust">
+            </div>
+            <div class="form-group">
+                <label for="ded_type">Deduction Type</label>
+                <select id="ded_type" name="ded_type">
+                    <option value="Add">Add</option>
+                    <option value="Subtract">Subtract</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="calc_type">Calculation Type</label>
+                <select id="calc_type" name="calc_type">
+                    <option value="Amount">Amount</option>
+                    <option value="%">%</option>
+                </select>
+            </div>
+            <button type="submit">Save Deduction</button>
+        </form>
+    </div>
+</body>
+</html>
