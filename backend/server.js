@@ -15,7 +15,11 @@ let actualPort = PORT
 // Middleware
 app.use(cors())
 app.use(express.json())
-app.use(express.static(path.join(__dirname, '../frontend/dist')))
+const frontendPath = path.join(__dirname, '../frontend/dist')
+
+if (fs.existsSync(frontendPath)) {
+  app.use(express.static(frontendPath))
+}
 app.use('/Entry', express.static(path.join(__dirname, '../Entry')))
 
 // Routes
@@ -75,7 +79,13 @@ app.get('/api/health', (req, res) => {
 
 // Serve React app for any unmatched routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'))
+  const indexPath = path.join(__dirname, '../frontend/dist/index.html')
+
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath)
+  } else {
+    res.send('Frontend not built. API is running.')
+  }
 })
 
 // Error handling middleware
