@@ -5,9 +5,13 @@ const fs = require('fs')
 // Determine database path - support both development and production
 // In production (Tauri), the app is in the resources folder
 let dbDir
-if (process.env.NODE_ENV === 'production') {
-  dbDir = path.join(process.resourcesPath, 'database')
-} else {
+
+// Render / server environment
+if (process.env.RENDER) {
+  dbDir = path.join(__dirname, '../../database')
+}
+// Local development
+else {
   dbDir = path.join(__dirname, '../../database')
 }
 
