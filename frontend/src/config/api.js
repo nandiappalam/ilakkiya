@@ -1,124 +1,156 @@
 // API Configuration
-// Centralized API configuration for ERP Application
+// Hybrid: Works in BOTH Web (Node backend) and Desktop (Tauri + Rust)
 
-// Base URL for API calls
-// Use relative path for Vite proxy - DO NOT use hardcoded localhost
-// Vite proxy will forward /api requests to the backend server
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+import { invoke } from "@tauri-apps/api/core";
 
-// API Endpoints
-export const API_ENDPOINTS = {
-  // Master Modules
-  masters: {
-    customer: `${API_BASE_URL}/masters/customer_master`,
-    supplier: `${API_BASE_URL}/masters/supplier_master`,
-    item: `${API_BASE_URL}/masters/item_master`,
-    itemGroup: `${API_BASE_URL}/masters/item_group`,
-    area: `${API_BASE_URL}/masters/area_master`,
-    city: `${API_BASE_URL}/masters/city_master`,
-    ledger: `${API_BASE_URL}/masters/ledger_master`,
-    ledgerGroup: `${API_BASE_URL}/masters/ledger_group`,
-    consignee: `${API_BASE_URL}/masters/consignee_master`,
-    pTrans: `${API_BASE_URL}/masters/ptrans_master`,
-    flourMill: `${API_BASE_URL}/masters/flourmill_master`,
-    papadCompany: `${API_BASE_URL}/masters/papadcompany_master`,
-    sender: `${API_BASE_URL}/masters/sender_master`,
-    transport: `${API_BASE_URL}/masters/transport_master`,
-    weight: `${API_BASE_URL}/masters/weight_master`,
-    deductionSales: `${API_BASE_URL}/masters/deduction_sales`,
-    deductionPurchase: `${API_BASE_URL}/masters/deduction_purchase`,
-  },
-  
-  // Entry Modules
-  entries: {
-    sales: `${API_BASE_URL}/entries/sales`,
-    purchase: `${API_BASE_URL}/entries/purchase`,
-    salesReturn: `${API_BASE_URL}/entries/sales_return`,
-    purchaseReturn: `${API_BASE_URL}/entries/purchase_return`,
-    advance: `${API_BASE_URL}/entries/advance`,
-    flourOut: `${API_BASE_URL}/entries/flour_out`,
-    flourOutReturn: `${API_BASE_URL}/entries/flour_out_return`,
-    grind: `${API_BASE_URL}/entries/grind`,
-    papadIn: `${API_BASE_URL}/entries/papad_in`,
-    packing: `${API_BASE_URL}/entries/packing`,
-    quotation: `${API_BASE_URL}/entries/quotation`,
-    stockAdjust: `${API_BASE_URL}/entries/stock_adjust`,
-    weightConversion: `${API_BASE_URL}/entries/weight_conversion`,
-    salesExport: `${API_BASE_URL}/entries/sales_export`,
-    salesExportOrder: `${API_BASE_URL}/entries/sales_export_order`,
-  }
-};
+// Detect Tauri environment
+const isTauri =
+  typeof window !== "undefined" &&
+  window.__TAURI__ !== undefined;
 
-// HTTP Methods
-export const HTTP_METHODS = {
-  GET: 'GET',
-  POST: 'POST',
-  PUT: 'PUT',
-  DELETE: 'DELETE',
-};
+// Base URL for web mode only
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
-// Default headers
+// ===============================
+// HTTP HEADERS (WEB ONLY)
+// ===============================
 export const getHeaders = () => ({
-  'Content-Type': 'application/json',
+  "Content-Type": "application/json",
 });
 
-// API Helper functions
+// ===============================
+// ENDPOINT MAP → TAURI COMMANDS
+// ===============================
+const endpointToCommandMap = {
+  // Masters
+  "/masters/customer_master": "get_customers",
+  "/masters/supplier_master": "get_suppliers",
+  "/masters/item_master": "get_items",
+  "/masters/item_group": "get_item_groups",
+  "/masters/area_master": "get_areas",
+  "/masters/city_master": "get_cities",
+  "/masters/ledger_master": "get_ledgers",
+  "/masters/ledger_group": "get_ledger_groups",
+  "/masters/consignee_master": "get_consignee",
+  "/masters/ptrans_master": "get_ptrans",
+  "/masters/flourmill_master": "get_flourmills",
+  "/masters/papadcompany_master": "get_papad_companies",
+  "/masters/sender_master": "get_senders",
+  "/masters/transport_master": "get_transports",
+  "/masters/weight_master": "get_weights",
+
+  // Entries
+  "/entries/sales": "create_sale_with_lots",
+  "/entries/purchase": "create_purchase_with_lots",
+  "/entries/sales_return": "create_sales_return",
+  "/entries/purchase_return": "create_purchase_return",
+  "/entries/advance": "create_advance",
+  "/entries/flour_out": "create_flour_out",
+  "/entries/flour_out_return": "create_flour_out_return",
+  "/entries/grind": "create_grind",
+  "/entries/papad_in": "create_papad_in",
+  "/entries/packing": "create_packing",
+  "/entries/quotation": "create_quotation",
+  "/entries/stock_adjust": "create_stock_adjust",
+  "/entries/weight_conversion": "create_weight_conversion",
+  "/entries/sales_export": "create_sales_export",
+  "/entries/sales_export_order": "create_sales_export_order",
+
+  // Reports
+  "/reports/stock": "get_stock_summary",
+  "/reports/daybook": "get_daybook",
+  "/reports/trial_balance": "get_trial_balance",
+};
+
+// ===============================
+// CORE API WRAPPER
+// ===============================
 export const api = {
-  // GET request
-  get: async (endpoint) => {
-    const response = await fetch(endpoint, {
-      method: HTTP_METHODS.GET,
+  // =========================
+  // GET
+  // =========================
+  get: async (endpoint, params = {}) => {
+    if (isTauri) {
+      const command = endpointToCommandMap[endpoint];
+      if (!command) throw new Error(`No Tauri command mapped for ${endpoint}`);
+      return await invoke(command, params);
+    }
+
+    const response = await fetch(API_BASE_URL + endpoint, {
+      method: "GET",
       headers: getHeaders(),
     });
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
-    }
+
+    if (!response.ok) throw new Error(await response.text());
     return response.json();
   },
 
-  // POST request
-  post: async (endpoint, data) => {
-    const response = await fetch(endpoint, {
-      method: HTTP_METHODS.POST,
+  // =========================
+  // POST
+  // =========================
+  post: async (endpoint, data = {}) => {
+    if (isTauri) {
+      const command = endpointToCommandMap[endpoint];
+      if (!command) throw new Error(`No Tauri command mapped for ${endpoint}`);
+      return await invoke(command, data);
+    }
+
+    const response = await fetch(API_BASE_URL + endpoint, {
+      method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
-    }
+
+    if (!response.ok) throw new Error(await response.text());
     return response.json();
   },
 
-  // PUT request
-  put: async (endpoint, data) => {
-    const response = await fetch(endpoint, {
-      method: HTTP_METHODS.PUT,
+  // =========================
+  // PUT
+  // =========================
+  put: async (endpoint, data = {}) => {
+    if (isTauri) {
+      const command = endpointToCommandMap[endpoint];
+      if (!command) throw new Error(`No Tauri command mapped for ${endpoint}`);
+      return await invoke(command, data);
+    }
+
+    const response = await fetch(API_BASE_URL + endpoint, {
+      method: "PUT",
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
-    }
+
+    if (!response.ok) throw new Error(await response.text());
     return response.json();
   },
 
-  // DELETE request
-  delete: async (endpoint) => {
-    const response = await fetch(endpoint, {
-      method: HTTP_METHODS.DELETE,
-      headers: getHeaders(),
-    });
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+  // =========================
+  // DELETE
+  // =========================
+  delete: async (endpoint, data = {}) => {
+    if (isTauri) {
+      const command = endpointToCommandMap[endpoint];
+      if (!command) throw new Error(`No Tauri command mapped for ${endpoint}`);
+      return await invoke(command, data);
     }
+
+    const response = await fetch(API_BASE_URL + endpoint, {
+      method: "DELETE",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) throw new Error(await response.text());
     return response.json();
   },
 };
 
+// ===============================
+// EXPORT DEFAULT
+// ===============================
 export default {
   API_BASE_URL,
-  API_ENDPOINTS,
-  HTTP_METHODS,
-  getHeaders,
   api,
+  getHeaders,
 };

@@ -1,7 +1,8 @@
 mod commands;
 mod commands_reports;
 mod database;
-
+mod models;
+use models::SaleInput;
 use std::sync::Mutex;
 use tauri::Manager;
 
@@ -161,4 +162,19 @@ pub fn main() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+#[tauri::command]
+pub fn create_sale_with_lots(data: SaleInput) -> Result<String, String> {
+    println!("Sale received: {:?}", data);
+
+    // TODO: your SQLite logic here
+    Ok("Sale created successfully".to_string())
+}
+#[tauri::command]
+pub fn create_purchase_with_lots(data: PurchaseInput) -> Result<String, String> {
+    Ok("Purchase saved".to_string())
+}
+#[tauri::command]
+pub fn get_stock_summary() -> Result<String, String> {
+    Ok("Stock data".to_string())
 }

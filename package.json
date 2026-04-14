@@ -16,6 +16,7 @@
     "postinstall": "cd frontend && npm install"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.10.1",
     "bcrypt": "^6.0.0"
   },
   "devDependencies": {
