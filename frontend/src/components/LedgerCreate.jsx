@@ -14,22 +14,21 @@ const LedgerCreate = () => {
   const [messageType, setMessageType] = useState('success');
 
   const handleChange = (name, value) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+    setFormData(prev => {
+      let updated = { ...prev, [name]: value };
 
-  const getResetData = () => {
-    const resetData = {};
-    config.sections.forEach(section => {
-      section.fields.forEach(field => {
-        resetData[field.name] = field.defaultValue || '';
-      });
+      if (name === "name") {
+        if (!prev.printname || prev.printname === prev.name) {
+          updated.printname = value;
+        }
+      }
+
+      return updated;
     });
-    return resetData;
   };
 
-  useEffect(() => {
-    setFormData(getResetData());
-  }, []);
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,7 +45,7 @@ const LedgerCreate = () => {
       if (result.success) {
         setMessage('Ledger saved successfully!');
         setMessageType('success');
-        setFormData(getResetData());
+        setFormData({});
         setTimeout(() => setMessage(''), 3000);
       } else {
         setMessage('Error: ' + (result.message || 'Unknown error'));
@@ -62,7 +61,7 @@ const LedgerCreate = () => {
   };
 
   const handleCancel = () => {
-    setFormData(getResetData());
+    setFormData({});
     setMessage('');
   };
 

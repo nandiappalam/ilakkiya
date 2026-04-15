@@ -13,3 +13,17 @@ pub struct SaleItem {
     pub qty: f64,
     pub rate: f64,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PurchaseInput {
+    pub supplier_id: i32,
+    pub date: String,
+    pub items: Vec<PurchaseItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PurchaseItem {
+    pub item_id: i32,
+    pub qty: f64,
+    pub rate: f64,
+}

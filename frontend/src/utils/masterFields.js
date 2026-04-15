@@ -1,21 +1,23 @@
 // Dropdown mappings (API tables)
 export const MASTER_FIELD_TYPES = {
   item_group: "item_groups",
-  ledger: "ledgers",
-  sender: "sender_master",
-  p_trans: "p_trans",
-  weight: "weights",
-  items: "items",
-  customers: "customers",
-  suppliers: "suppliers",
-  godowns: "godowns",
-  transport: "transport",
-  ledger_groups: "ledger_groups",
-  areas: "areas",
-  cities: "cities",
-  statuses: "statuses", // Assume statuses table or hardcoded
-  item_types: "item_types", // Assume
+  ledger_group: "ledgergroupmaster",
+  ledger: "ledgermaster",
+  area: "area_master",
+  city: "city_master",
+  transport: "transport_master",
+  p_trans: "ptrans_master",
+  sender: "sender_group_master",
+  consignee: "consignee_group_master",
+  godown: "godown_master",
+  flour_mill: "flour_mill_master",
+  papad_company: "papad_company_master",
+  weight: "weightmaster",
+  statuses: ["Active", "Inactive"], // Static
+  deduction_type: ["%", "Amount"], // Static
+  nature: ["Assets", "Liabilities", "Income", "Expense"] // Ledger Group
 };
+
 
 // Input type overrides
 export const FIELD_TYPES = {
@@ -30,17 +32,54 @@ export const FIELD_TYPES = {
   limit_amount: "number",
 };
 
-// 🔥 MASTER CONFIG - Config-driven forms for ALL modules (Safe updates only)
+
+// Status dropdown for ALL modules
+// Status field for ALL modules
+const STATUS_FIELD = { 
+  name: "status", 
+  label: "Status", 
+  type: "select", 
+  options: ["Active", "Inactive"], 
+  defaultValue: "Active" 
+};
+
+
 export const MASTER_CONFIG = {
-  item: {
-    table: 'item_master',
-    sections: [ // ✅ Perfect - leave as-is
-      { title: "Basic Info", fields: [{ name: "item_code", label: "Item Code", type: "text", readonly: true }, { name: "item_name", label: "Item Name", type: "text", required: true }, { name: "print_name", label: "Print Name", type: "text" }] },
-      { title: "Classification", fields: [{ name: "item_group", label: "Item Group", masterType: "item_groups" }, { name: "type", label: "Type", masterType: "item_types" }] },
-      { title: "Tax Details", fields: [{ name: "tax", label: "Tax %", type: "number" }, { name: "hsn_code", label: "HSN Code", type: "text" }, { name: "ed_percent", label: "ED %", type: "number" }] },
-      { title: "Other", fields: [{ name: "status", label: "Status", masterType: "statuses" }] }
+  item_group: {
+    table: 'item_groups',
+    sections: [
+      { title: "Basic Info", fields: [
+        { name: "group_code", label: "Item Group", type: "text", readonly: true },
+        { name: "group_name", label: "Group Name", type: "text", required: true },
+        { name: "print_name", label: "(Print Name)", type: "text" },
+        { name: "tax", label: "Tax %", type: "number" }
+      ] },
+      { title: "Status", fields: [STATUS_FIELD] }
     ]
   },
+  item: {
+    table: 'item_master',
+    sections: [
+      { title: "Basic Info", fields: [
+        { name: "item_code", label: "Item Code", type: "text", readonly: true },
+        { name: "item_name", label: "Item Name", type: "text", required: true },
+        { name: "print_name", label: "(Print Name)", type: "text" }
+      ] },
+      { title: "Classification", fields: [
+        { name: "item_group", label: "Item Group", masterType: "item" },
+        { name: "type", label: "Type", type: "text" }
+      ] },
+      { title: "Tax Details", fields: [
+        { name: "tax", label: "Tax %", type: "number" },
+        { name: "hsn_code", label: "HSN", type: "text" },
+        { name: "ed_percent", label: "ED %", type: "number" }
+      ] },
+      { title: "Status", fields: [STATUS_FIELD] }
+    ]
+  },
+
+
+
   customer: {
     table: 'customer_master',
     sections: [ // ➕ Add missing
@@ -64,15 +103,34 @@ export const MASTER_CONFIG = {
   },
   flour_mill: {
     table: 'flour_mill_master',
-    sections: [ // ➕ Full expansion per schema/DB
-      { title: "Basic Info", fields: [{ name: "mill_name", label: "Mill Name", type: "text", required: true }] }, // flourmill in DB
-      { title: "Contact Info", fields: [{ name: "contact_person", label: "Contact Person", type: "text" }, { name: "phone", label: "Phone", type: "text" }] },
-      { title: "Address", fields: [{ name: "address", label: "Address", type: "textarea" }] },
-      { title: "Tax", fields: [{ name: "gst_no", label: "GST No", type: "text" }] },
-      { title: "Financial", fields: [{ name: "wages_kg", label: "Wages/kg", type: "number" }, { name: "opening_balance", label: "Opening Balance", type: "number" }] },
-      { title: "Other", fields: [{ name: "status", label: "Status", masterType: "statuses" }] }
+    sections: [
+      { title: "Basic Info", fields: [
+        { name: "flourmill", label: "Flour Mill", type: "text", required: true },
+        { name: "print_name", label: "(Print Name)", type: "text" },
+        { name: "contact_person", label: "Cont. Person", type: "text" },
+        { name: "area", label: "Area", masterType: "area_master" }
+      ] },
+      { title: "Address", fields: [
+        { name: "address1", label: "Address", type: "textarea", rows: 3 }
+      ] },
+      { title: "Contact", fields: [
+        { name: "phone_res", label: "Phone (Res)", type: "text" },
+        { name: "phone_off", label: "Phone (Off)", type: "text" },
+        { name: "mobile1", label: "Mobile 1", type: "text" },
+        { name: "mobile2", label: "Mobile 2", type: "text" }
+      ] },
+      { title: "Tax", fields: [
+        { name: "gst_number", label: "GST No", type: "text" }
+      ] },
+      { title: "Financial", fields: [
+        { name: "wages_kg", label: "Wages/Kg", type: "number" },
+        { name: "opening_balance", label: "Opening Balance", type: "number" }
+      ] },
+      { title: "Status", fields: [STATUS_FIELD] }
     ]
   },
+
+
   papad_company: { // ➕ Full per schema (papad_company_master)
     table: 'papad_company_master',
     sections: [
@@ -98,11 +156,31 @@ export const MASTER_CONFIG = {
     ]
   },
   ledger: {
+    title: "Ledger",
     table: "ledgermaster",
-    sections: [ // ➕
-      { title: "Basic Info", fields: [{ name: "ledger_name", label: "Ledger Name", type: "text", required: true }, { name: "ledger_group", label: "Ledger Group", masterType: "ledger_groups" }] },
-      { title: "Financial", fields: [{ name: "opening_balance", label: "Opening Balance", type: "number" }, { name: "balance_type", label: "Balance Type", type: "select", options: [{value:"Dr",label:"Dr"},{value:"Cr",label:"Cr"}] }] },
-      { title: "Other", fields: [{ name: "status", label: "Status", masterType: "statuses" }] }
+    sections: [
+      {
+        title: "Ledger Details",
+        fields: [
+          { name: "name", label: "Name", type: "text", required: true },
+          { name: "printname", label: "Print Name", type: "text" },
+          { 
+            name: "under", 
+            label: "Under (Group)", 
+            type: "select", 
+            masterType: "ledger_groups" 
+          },
+          { 
+            name: "openingbalance", 
+            label: "Opening Balance", 
+            type: "number", 
+            default: 0 
+          },
+          { name: "area", label: "Area", masterType: "area_master" },
+          { name: "credit", label: "Credit Limit", type: "number" },
+          { name: "debit", label: "Debit Limit", type: "number" }
+        ]
+      }
     ]
   },
   area: {

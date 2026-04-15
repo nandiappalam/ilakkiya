@@ -16,7 +16,7 @@ const FlourMillDisplay = () => {
 
   const loadFlourMills = async () => {
     try {
-      const result = await api.getMasters("flour_mills");
+      const result = await api.getMasters("flour_mill_master");
       setFlourMills(result.data || []);
     } catch (error) {
       console.error('Error loading flour mills:', error);
@@ -25,6 +25,7 @@ const FlourMillDisplay = () => {
       setLoading(false);
     }
   };
+
 
   const handleDelete = async (flourMill) => {
     if (!confirm('Are you sure you want to delete this flour mill?')) return;

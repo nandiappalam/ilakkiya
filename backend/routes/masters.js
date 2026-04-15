@@ -280,13 +280,14 @@ router.get('/all/:table', async (req, res) => {
       return res.status(400).json({ message: 'Invalid master table' })
     }
 
-    const result = await db.query(`SELECT * FROM ${tableConfig.table} ORDER BY id DESC`)
-    res.json(result.rows)
+    const result = await db.query(`SELECT * FROM ${tableConfig.table}`)
+    res.json({ success: true, data: result.rows })
   } catch (error) {
     console.error('Error fetching master records:', error)
     res.status(500).json({ message: 'Error fetching records', error: error.message })
   }
 })
+
 
 // ============================================================================
 // GET SINGLE RECORD BY ID

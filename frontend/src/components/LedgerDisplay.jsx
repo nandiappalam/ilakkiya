@@ -16,7 +16,7 @@ const LedgerDisplay = () => {
 
   const fetchLedgers = async () => {
     try {
-      const result = await api.getLedgers()
+      const result = await api.getMasters("ledgermaster")
       if (result.success) {
         setLedgers(result.data)
       } else {
@@ -28,6 +28,7 @@ const LedgerDisplay = () => {
       setLoading(false)
     }
   }
+
 
   const handleDelete = async (ledger) => {
     if (!window.confirm('Are you sure you want to delete this ledger?')) return
@@ -66,20 +67,18 @@ const LedgerDisplay = () => {
     printWindow.print()
   }
 
-  const columns = [
-    { key: 'sno', title: 'S.No', width: '60px', render: (_, __, index) => index + 1 },
-    { key: 'name', title: 'Name' },
-    { key: 'printname', title: 'Print Name' },
-    { key: 'under', title: 'Under' },
-    { key: 'openingbalance', title: 'Opening Balance' },
-    { key: 'area', title: 'Area' },
-    { key: 'credit', title: 'Credit' },
-    { key: 'debit', title: 'Debit' },
-  ]
+const columns = [
+    { key: "name", title: "Name" },
+    { key: "under", title: "Group", render: (row) => row.under || '-' },
+    { key: "openingbalance", title: "Balance", render: (row) => parseFloat(row.openingbalance || 0).toFixed(2) },
+    { key: "actions", title: "Action" }
+  ];
+
+
 
   return (
     <MasterTableLayout
-      title="LEDGER MASTER"
+      title="Ledger List"
       columns={columns}
       data={ledgers}
       onEdit={handleUpdate}
