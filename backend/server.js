@@ -15,8 +15,7 @@ let actualPort = PORT
 // Middleware
 app.use(cors())
 app.use(express.json())
-const frontendPath = path.join(__dirname, './frontend/dist','74.220.52.0/24',
-'74.220.60.0/24')
+const frontendPath = path.join(__dirname, './frontend/dist')
 
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath))
