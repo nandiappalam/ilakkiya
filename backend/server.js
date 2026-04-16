@@ -17,9 +17,28 @@ app.use(cors())
 app.use(express.json())
 const frontendPath = path.join(__dirname, './frontend/dist')
 
+// Serve static frontend files
 if (fs.existsSync(frontendPath)) {
-  app.use(express.static(frontendPath))
+  app.use(express.static(frontendPath));
 }
+
+// API routes FIRST
+// (your existing routes here)
+
+// React fallback ONLY for non-API routes
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ message: 'API route not found' });
+  }
+
+  const indexPath = path.join(frontendPath, 'index.html');
+
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.send('Frontend not built. API is running.');
+  }
+});
 app.use('/Entry', express.static(path.join(__dirname, '../Entry')))
 
 // Routes
