@@ -1,67 +1,104 @@
-import { invoke } from '@tauri-apps/api/tauri'
-
+import { invoke } from '@tauri-apps/api/tauri';
+import { safeArray } from './safeArray.js';
 const isTauri = typeof window !== 'undefined' && !!window.__TAURI__;
 
+// ✅ Same domain (Render)
+const BASE_URL = "";
+
+// 🔥 Generic API call for web
+async function apiCall(endpoint, method = "GET", data = null) {
+  const options = {
+    method,
+    headers: {
+      "Content-Type": "application/json"
+    }
+  };
+
+  if (data) {
+    options.body = JSON.stringify(data);
+  }
+
+  const res = await fetch(`${BASE_URL}/api/${endpoint}`, options);
+
+  if (!res.ok) {
+    throw new Error(`API Error: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+// 🔥 Hybrid function (Tauri + Web)
 async function safeInvoke(cmd, args = {}) {
-  if (!isTauri) {
-    console.warn(`[MOCK API] ${cmd}`, args);
-    return mockResponse(cmd, args);
+  if (isTauri) {
+    try {
+      return await invoke(cmd, args);
+    } catch (error) {
+      console.error(`Tauri error: ${cmd}`, error);
+      throw error;
+    }
   }
-  try {
-    return await invoke(cmd, args);
-  } catch (error) {
-    console.error(`Tauri command failed: ${cmd}`, error);
-    return mockResponse(cmd, args);
-  }
-}
 
-function mockResponse(cmd, args = {}) {
+  // 🌐 WEB MODE (Render)
   switch (cmd) {
+
     case 'get_masters':
-      return { success: true, data: [] };
-    case 'delete_master':
-      return { success: true };
+      return apiCall(`masters/${args.table}`);
+
     case 'create_master':
-      return { success: true, data: { id: 1 } };
+      return apiCall(`masters/${args.table}`, "POST", args.data);
+
+    case 'delete_master':
+      return apiCall(`masters/${args.table}/${args.id}`, "DELETE");
+
     case 'login':
-      return { success: true };
+      return apiCall(`auth/login`, "POST", args);
+
     case 'get_next_lot':
-      return 1;
+      return apiCall(`stock/next-lot`);
+
     case 'get_available_lots':
-      return [];
+      return apiCall(`stock/available/${args.itemId}`);
+
     default:
-      return { success: false, data: [], message: 'Command not found' };
+      throw new Error(`Unknown command: ${cmd}`);
   }
 }
 
+// 🔥 Main API object
 const api = {
-  getMasters: async (table) => safeInvoke('get_masters', { table }),
-  createMaster: async (table, data) => safeInvoke('create_master', { table, data }),
-  deleteMaster: async (table, id) => safeInvoke('delete_master', { table, id }),
-  login: async (username, password, companyId) => safeInvoke('login', { username, password, companyId }),
-  getNextLot: async () => safeInvoke('get_next_lot'),
-  getAvailableLots: async (itemId) => safeInvoke('get_available_lots', { itemId }),
+  getMasters: (table) => safeInvoke('get_masters', { table }),
+  createMaster: (table, data) => safeInvoke('create_master', { table, data }),
+  deleteMaster: (table, id) => safeInvoke('delete_master', { table, id }),
+
+  login: (username, password, companyId) =>
+    safeInvoke('login', { username, password, companyId }),
+
+  getNextLot: () => safeInvoke('get_next_lot'),
+
+  getAvailableLots: (itemId) =>
+    safeInvoke('get_available_lots', { itemId }),
 };
 
-// Specific API wrappers
+// Add this after api object creation
+
+
+// 🔥 Specific wrappers (your app usage)
+
 api.getCustomers = () => api.getMasters('customer_master');
-api.deleteCustomer = (id) => api.deleteMaster('customer_master', id);
-api.getFlourMills = () => api.getMasters('flour_mill_master');
-api.getGodowns = () => api.getMasters('godown_master');
-api.getAreas = () => api.getMasters('area_master');
 api.getSuppliers = () => api.getMasters('supplier_master');
+api.getAreas = () => api.getMasters('area_master');
 api.getLedgerGroups = () => api.getMasters('ledgergroupmaster');
 api.getLedgers = () => api.getMasters('ledgermaster');
+
+api.deleteCustomer = (id) => api.deleteMaster('customer_master', id);
 api.deleteLedger = (id) => api.deleteMaster('ledgermaster', id);
-api.getPapadCompanies = () => api.getMasters('papad_company_master');
-api.getConsignees = () => api.getMasters('consignee_master');
-api.getSenders = () => api.getMasters('sender_master');
-api.getTransports = () => api.getMasters('transport_master');
-api.getDeductionSales = () => api.getMasters('deduction_sales');
-api.getDeductionPurchase = () => api.getMasters('deduction_purchase');
+export const createGrain = (data) =>
+  isTauri
+    ? safeInvoke("create_grain", { data })   // optional (if Tauri supports)
+    : apiCall("grains", "POST", data);
 
-import { safeArray } from './safeArray.js';
+api.createGrain = createGrain;
+
+
 export { safeArray };
-
 export default api;
-
