@@ -1,6 +1,6 @@
 /**
  * Tauri API Wrapper - COMPLETE with Company functions
- */
+ 
 
 import { invoke } from '@tauri-apps/api';
 import api from './api.js';
@@ -11,7 +11,7 @@ export const deleteMaster = (table, id) => invoke('delete_master', { table, id }
 export const executeQuery = (sql, params = []) => invoke('execute_query', { sql, params });
 export const executeStatement = (sql, params = []) => invoke('execute_statement', { sql, params });
 
-// COMPANY FUNCTIONS
+// COMPANY FUNCTIONS]
 export const getCompanies = () => invoke('get_companies');
 export const createCompany = (companyName, address, gstNumber, contact, email) => invoke('create_company', { companyName, address, gstNumber, contact, email });
 export const getCompany = (id) => invoke('get_company', { id });
@@ -110,3 +110,4 @@ export default {
   // all other functions
 };
 
+*/

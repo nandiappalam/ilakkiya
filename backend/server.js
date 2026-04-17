@@ -15,18 +15,19 @@ let actualPort = PORT
 // Middleware
 app.use(cors())
 app.use(express.json())
-const frontendPath = path.join(__dirname, './frontend/dist')
+const frontendPath = path.join(__dirname, '../frontend/dist')
 
 // Serve static frontend files
 if (fs.existsSync(frontendPath)) {
-  app.use(express.static(frontendPath));
+  app.use(express.static(frontendPath, {
+  index: false
+}));
 }
-
 // API routes FIRST
 // (your existing routes here)
 
 // React fallback ONLY for non-API routes
-app.get('*', (req, res) => {
+/*app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ message: 'API route not found' });
   }
@@ -38,7 +39,7 @@ app.get('*', (req, res) => {
   } else {
     res.send('Frontend not built. API is running.');
   }
-});
+});*/
 app.use('/Entry', express.static(path.join(__dirname, '../Entry')))
 
 // Routes
@@ -97,7 +98,7 @@ app.get('/api/health', (req, res) => {
 })
 
 // Serve React app for any unmatched routes
-app.get('*', (req, res) => {
+/*app.get('*', (req, res) => {
   const indexPath = path.join(__dirname, '../frontend/dist/index.html')
 
   if (fs.existsSync(indexPath)) {
@@ -105,7 +106,38 @@ app.get('*', (req, res) => {
   } else {
     res.send('Frontend not built. API is running.')
   }
-})
+})*/
+
+app.use(express.static(frontendPath));
+
+// Serve React app for any unmatched routes
+app.get('*', (req, res) => {
+  // Ignore API routes
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ message: 'API route not found' });
+  }
+
+  const indexPath = path.join(frontendPath, 'index.html');
+
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+
+  res.send('Frontend not built. API is running.');
+});
+  // Let static files pass through (IMPORTANT)
+ /* const filePath = path.join(frontendPath, req.path);
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  // React fallback
+  const indexPath = path.join(frontendPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }*/
+
+ // res.send('Frontend not built. API is running.');
 
 // Error handling middleware
 app.use((err, req, res, next) => {

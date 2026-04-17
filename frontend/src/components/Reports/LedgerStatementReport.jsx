@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getSuppliers, getCustomers, getPapadCompanies, getLedgerStatementReport } from '../../utils/tauriApi'
+import { getSuppliers, getCustomers, getPapadCompanies, getLedgerStatementReport } from '../../utils/api'
 import './ReportPage.css'
 
 /**

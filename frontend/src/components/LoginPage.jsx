@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../utils/api';
+import { login as apiLogin } from '../utils/api';
 import {
   Box,
   Card,
@@ -66,14 +66,21 @@ const LoginPage = () => {
     try {
       // Use dual-mode API (works in both browser and Tauri)
       // Pass company_id along with username and password
-      const response = await api.login(username, password, selectedCompany.id);
-
+      const response = await apiLogin({
+        username,
+        password,
+        company_id: selectedCompany.id
+      });
       // Update auth context with login data
       login(response);
 
       // Navigate to the dashboard (protected route)
       navigate('/dashboard');
-    } catch (err) {
+    } 
+    catch (err) {
+      setError('Invalid username or password for this company');
+      console.error('Login error:', err);}
+{
       // Check if response indicates no user exists for this company
       if (err.response && err.response.status === 404 && err.response.data.message === 'no_user_exists') {
         // No users exist for this company - redirect to create first user

@@ -1,15 +1,34 @@
 // API Configuration
 // Hybrid: Works in BOTH Web (Node backend) and Desktop (Tauri + Rust)
 
-import { invoke } from "@tauri-apps/api/core";
+//import { invoke } from "@tauri-apps/api/core";
+// Detect Tauri
 
 // Detect Tauri environment
-const isTauri =
+/*const isTauri =
   typeof window !== "undefined" &&
-  window.__TAURI__ !== undefined;
+  window.__TAURI__ !== undefined;*/
 
 // Base URL for web mode only
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+
+// ===============================
+// SAFE TAURI DETECTION
+// ===============================
+/*const isTauriApp = () => {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.__TAURI_IPC__ !== "undefined"
+  );
+};*/
+// ===============================
+// LAZY TAURI INVOKE (IMPORTANT FIX)
+// ===============================
+/*const tauriInvoke = async (cmd, args = {}) => {
+  const { invoke } = await import("@tauri-apps/api/core");
+  return invoke(cmd, args);
+};*/
+const isTauriApp = () => false;
 
 // ===============================
 // HTTP HEADERS (WEB ONLY)
@@ -31,9 +50,9 @@ const endpointToCommandMap = {
   "/masters/city_master": "get_cities",
   "/masters/ledger_master": "get_ledgers",
   "/masters/ledger_group": "get_ledger_groups",
-  "/masters/consignee_master": "get_consignee",
+  "/masters/consignee_master": "get_consignees",
   "/masters/ptrans_master": "get_ptrans",
-  "/masters/flourmill_master": "get_flourmills",
+  "/masters/flourmill_master": "get_flour_mills",
   "/masters/papadcompany_master": "get_papad_companies",
   "/masters/sender_master": "get_senders",
   "/masters/transport_master": "get_transports",
@@ -63,9 +82,83 @@ const endpointToCommandMap = {
 };
 
 // ===============================
-// CORE API WRAPPER
+// CORE API
 // ===============================
 export const api = {
+  get: async (endpoint, params = {}) => {
+    /*if (isTauriApp()) {
+      const cmd = endpointToCommandMap[endpoint];
+      if (cmd) return tauriInvoke(cmd, params);}*/
+
+      if (import.meta.env.DEV) 
+       console.warn("Fallback to HTTP:", endpoint);
+    
+
+     const query = new URLSearchParams(params).toString();
+     const url = query ? `${API_BASE_URL + endpoint}?${query}` : API_BASE_URL + endpoint;
+
+     const res = await fetch(url);
+     if (!res.ok) throw new Error(await res.text());
+     return res.json();
+  },
+
+  post: async (endpoint, data = {}) => {
+    if (isTauriApp()) {
+      const cmd = endpointToCommandMap[endpoint];
+      if (cmd) return tauriInvoke(cmd, data);
+    }
+
+    const res = await fetch(API_BASE_URL + endpoint, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  put: async (endpoint, data = {}) => {
+    if (isTauriApp()) {
+      const cmd = endpointToCommandMap[endpoint];
+      if (cmd) return tauriInvoke(cmd, data);
+    }
+
+    const res = await fetch(API_BASE_URL + endpoint, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+  if (!res.ok) throw new Error(await res.text());
+
+    return res.json();
+  },
+
+  delete: async (endpoint, data = {}) => {
+    if (isTauriApp()) {
+      const cmd = endpointToCommandMap[endpoint];
+      if (cmd) return tauriInvoke(cmd, data);
+    }
+
+    const res = await fetch(API_BASE_URL + endpoint, {
+      method: "DELETE",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+
+    return res.json();
+  },
+};
+
+// ===============================
+export default api;
+// ===============================
+// CORE API WRAPPER
+// ===============================
+/*export const api = {
   // =========================
   // GET
   // =========================
@@ -153,4 +246,4 @@ export default {
   API_BASE_URL,
   api,
   getHeaders,
-};
+};*/

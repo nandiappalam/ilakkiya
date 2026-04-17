@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { executeQuery, executeStatement } from '../utils/tauriApi'
+import { executeQuery, executeStatement } from '../utils/api'
 import './WeightConversionDisplay.css'
 
 const WeightConversionDisplay = () => {

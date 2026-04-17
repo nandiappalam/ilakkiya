@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getTrialBalanceReport } from '../../utils/tauriApi'
+import { getTrialBalanceReport } from '../../utils/api'
 import './ReportPage.css'
 
 /**

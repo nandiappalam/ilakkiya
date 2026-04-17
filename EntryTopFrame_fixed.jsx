@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { executeQuery } from '../../utils/tauriApi';
+import { executeQuery } from '../../utils/api';
 
 /**
  * EntryTopFrame - 3 or 4-column info bar for Entry pages

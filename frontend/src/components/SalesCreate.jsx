@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { createSale } from '../utils/tauriApi'
+import { createSale } from '../utils/api'
 import { calculateTotals } from '../utils/taxCalc'
 import './SalesCreate.css'
 

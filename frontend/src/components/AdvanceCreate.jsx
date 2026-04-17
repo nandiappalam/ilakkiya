@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import './AdvanceCreate.css'
-import api from '../utils/api'
-
+import api from "../config/api";
 // Import modular entry components
 import { EntryTopFrame, EntryActions } from './entry'
 

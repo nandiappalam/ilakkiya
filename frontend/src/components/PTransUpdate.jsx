@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { getPTrans, updatePTrans } from '../utils/tauriApi'
+import { getPTrans, updatePTrans } from '../utils/api'
 import { safeArray } from '../utils/api'
 
 // Import modular master components

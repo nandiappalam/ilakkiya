@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { createPurchase } from '../utils/tauriApi'
+import { createPurchase } from '../utils/api'
 import './SalesCreate.css'
 
 // Import modular components from entry folder

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { getNextLot } from "../utils/api";
-import { createPurchase } from '../utils/tauriApi'
+import { createPurchase } from '../utils/api'
 import { calculateTotals } from '../../utils/taxCalc'
 import './SalesCreate.css'
 

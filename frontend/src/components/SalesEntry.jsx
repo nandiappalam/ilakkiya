@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { createSale } from '../utils/tauriApi'
+import { createSale } from '../utils/api'
 import './SalesEntry.css'
 
 const SalesEntry = () => {

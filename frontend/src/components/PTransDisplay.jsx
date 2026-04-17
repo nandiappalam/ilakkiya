@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getPTrans, deletePTrans } from '../utils/tauriApi'
+import { getPTrans, deletePTrans } from '../utils/api'
 import MasterTableLayout from './master/MasterTableLayout'
 
 const PTransDisplay = () => {

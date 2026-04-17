@@ -3,7 +3,7 @@
  * Provides a unified interface for all Tauri invoke calls
  * 
  * Uses Tauri v1 API (@tauri-apps/api)
- */
+ 
 
 import { invoke } from '@tauri-apps/api';
 
@@ -18,6 +18,7 @@ export async function api(command, payload = {}) {
 }
 
 // Alias for backward compatibility - re-export from tauriApi
-export * from '../utils/tauriApi';
+export * from '../utils/api';
 
 export default api;
+*/

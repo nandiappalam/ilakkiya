@@ -6,7 +6,7 @@
  * Uses Tauri v1 API (@tauri-apps/api)
  */
 
-import { invoke } from '@tauri-apps/api';
+/*import { invoke } from '@tauri-apps/api';
 
 // Check if running in Tauri environment
 const isTauri = () => {
@@ -272,3 +272,4 @@ export default {
   // Utilities
   getTableData, insertData, updateData, deleteData,
 };
+*/

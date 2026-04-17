@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getItemGroups, deleteItemGroup } from '../utils/tauriApi'
+import { getItemGroups, deleteItemGroup } from '../utils/api'
 import MasterTableLayout from './master/MasterTableLayout'
 
 const ItemGroupDisplay = () => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getWeights, deleteWeight } from '../utils/tauriApi';
+import { getWeights, deleteWeight } from '../utils/api';
 import MasterTableLayout from './master/MasterTableLayout';
 
 const WeightDisplay = () => {
