@@ -80,7 +80,7 @@ const EntryItemsTable = ({
     try {
       const result = await api.getNextLot();
       return safeArray(result)[0]?.lot_no || 'LOT001';
-    } catch {
+    } catch (err){
       return 'LOT001';
     }
   };
