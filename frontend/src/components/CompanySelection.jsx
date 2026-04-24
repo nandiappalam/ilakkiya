@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getCompanies } from '../utils/api';
+import api from '../services/api.js';
 import { Box, Card, CardContent, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, CircularProgress, Alert } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -24,44 +24,30 @@ const CompanySelection = () => {
   const fetchCompanies = async () => {
     try {
       setLoading(true);
-      const result = await getCompanies();
-      if (Array.isArray(result)) { 
-        setCompanies(result || []); 
-        // Auto-redirect to create company if no companies exist
-        if (!result || result.length === 0) {
-          console.log('No companies found, redirecting to create company...');
-          navigate('/company-create');
-          return;
-        }
-      }
-      else if (result && result.success) { 
-        setCompanies(result.data || []); 
-        // Auto-redirect to create company if no companies exist
-        if (!result.data || result.data.length === 0) {
-          console.log('No companies found, redirecting to create company...');
-          navigate('/company-create');
-          return;
-        }
-      }
-      else { 
-        setError(result?.message || 'Failed to fetch companies');
-        // If we get an error, also try to create company
-        navigate('/company-create');
+      const result = await api('companies');
+      setCompanies(Array.isArray(result) ? result : []);
+      if (!result || result.length === 0) {
+        console.log('No companies found, redirecting to create company...');
+        navigate('/general-company-create');
+        return;
       }
     } catch (error) { 
       console.error('Error fetching companies:', error);
       setError('Error connecting to server');
-      // On error, redirect to create company page
-      navigate('/company-create');
+      navigate('/general-company-create');
+    } finally { 
+      setLoading(false); 
     }
-    finally { setLoading(false); }
   };
 
   const handleSelectCompany = (company) => { selectCompany(company); navigate('/auth-choice'); };
-  const handleUpdate = (company) => { navigate(`/company-alter/${company.id}`); };
+  const handleUpdate = (company) => { navigate(`/general-company-create/${company.id}`); };
   const handleDelete = async (company) => {
     if (window.confirm(`Are you sure you want to delete "${company.name}"?`)) {
-      try { await deleteMaster('companies', company.id); fetchCompanies(); }
+      try { 
+        await api(`companies/${company.id}`, 'DELETE');
+        fetchCompanies(); 
+      }
       catch (error) { console.error('Error deleting company:', error); alert('Failed to delete company'); }
     }
   };
@@ -82,10 +68,10 @@ const CompanySelection = () => {
               <BusinessIcon sx={{fontSize:40,color:themeColors.primary}}/>
               <Box><Typography variant="h4" sx={{fontWeight:'bold',color:themeColors.primary}}>Company Details</Typography><Typography variant="body1" color="textSecondary">View, update, delete or print company information</Typography></Box>
             </Box>
-            <Button variant="contained" startIcon={<AddIcon/>} onClick={()=>navigate('/company-create')} sx={{backgroundColor:themeColors.primary,'&:hover':{backgroundColor:themeColors.secondary}}}>Add Company</Button>
+            <Button variant="contained" startIcon={<AddIcon/>} onClick={()=>navigate('/general-company-create')} sx={{backgroundColor:themeColors.primary,'&:hover':{backgroundColor:themeColors.secondary}}}>Add Company</Button>
           </Box>
           {error && <Alert severity="error" sx={{mb:2}}>{error}</Alert>}
-          {companies.length===0 ? (<Box sx={{textAlign:'center',py:4}}><Typography variant="body1" color="textSecondary" sx={{mb:2}}>No companies found. Please create a company first.</Typography><Button variant="contained" onClick={()=>navigate('/company-create')} sx={{backgroundColor:themeColors.primary,'&:hover':{backgroundColor:themeColors.secondary}}}>Create Company</Button></Box>) : (
+          {companies.length===0 ? (<Box sx={{textAlign:'center',py:4}}><Typography variant="body1" color="textSecondary" sx={{mb:2}}>No companies found. Please create a company first.</Typography><Button variant="contained" onClick={()=>navigate('/general-company-create')} sx={{backgroundColor:themeColors.primary,'&:hover':{backgroundColor:themeColors.secondary}}}>Create Company</Button></Box>) : (
             <TableContainer component={Paper} sx={{boxShadow:'none',border:`1px solid ${themeColors.lightBlue}`}}>
               <Table>
                 <TableHead sx={{backgroundColor:themeColors.lightBlue}}>

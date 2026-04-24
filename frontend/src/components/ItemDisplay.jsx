@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../utils/api.js';
+import { getMasters, createMaster, deleteMaster } from '../services/masterservice';
 import MasterTableLayout from './master/MasterTableLayout';
-import { safeArray } from '../utils/api.js';
+
 
 const ItemDisplay = () => {
   const [rows, setRows] = useState([]);
@@ -16,7 +16,7 @@ const ItemDisplay = () => {
   const fetchRows = async () => {
     setLoading(true);
     try {
-      const result = await api.getMasters("items");
+const result = await getMasters("items");
       // console.log('Item masters loaded:', result);
       setRows(result.data || []);
 
@@ -44,7 +44,7 @@ const ItemDisplay = () => {
 
   const handleSaveUpdate = async (updatedData) => {
     try {
-      await api.createMaster("item_master", updatedData);  // Reuse create or add update
+await createMaster("item_master", updatedData);  // Reuse create or add update
       setMessage('Updated successfully');
       setMessageType('success');
       setShowModal(false);
@@ -60,7 +60,7 @@ const ItemDisplay = () => {
   const handleDelete = async (row) => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
     try {
-      await api.deleteMaster("item_master", row.id);
+await deleteMaster("item_master", row.id);
       setMessage('Deleted successfully');
       setMessageType('success');
       fetchRows();

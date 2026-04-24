@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getPTrans, deletePTrans } from '../utils/api'
+import { getMasters, deleteMaster } from '../services/masterservice'
 import MasterTableLayout from './master/MasterTableLayout'
 
 const PTransDisplay = () => {
@@ -14,7 +14,7 @@ const PTransDisplay = () => {
 
   const loadPTrans = async () => {
     try {
-      const result = await getPTrans()
+const result = await getMasters('ptrans')
       if (result.success) {
         setPtrans(result.data)
       } else {
@@ -31,7 +31,7 @@ const PTransDisplay = () => {
     if (!window.confirm('Are you sure you want to delete this PTrans?')) return
 
     try {
-      const result = await deletePTrans(item.id)
+const result = await deleteMaster('ptrans_master', item.id)
       if (result.success) {
         alert('PTrans deleted successfully')
         loadPTrans()

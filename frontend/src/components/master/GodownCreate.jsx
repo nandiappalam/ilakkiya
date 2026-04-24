@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api.js';
-import { MASTER_CONFIG } from '../../utils/masterFields.js';
+import { MASTER_CONFIG } from '../../utils/masterConfig.js';
+import { safeArray } from '../../utils/safeArray.js';
 import MasterFormLayout from './MasterFormLayout';
 import { FormSection } from './FormSection';
 import SmartField from './SmartField';
 import './master.css';
 
 const GodownCreate = () => {
-  const config = MASTER_CONFIG.godown;
+  const config = MASTER_CONFIG.godown || {};
+  const sections = safeArray(config.sections);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -27,8 +29,8 @@ const GodownCreate = () => {
 
     // Init form
     const initialData = {};
-    config.sections.forEach(section => {
-      section.fields.forEach(field => {
+    sections.forEach(section => {
+      safeArray(section.fields).forEach(field => {
         initialData[field.name] = field.defaultValue || '';
       });
     });
@@ -53,8 +55,8 @@ const GodownCreate = () => {
         setMessageType('success');
         // Reset form
         const resetData = {};
-        config.sections.forEach(section => {
-          section.fields.forEach(field => {
+        sections.forEach(section => {
+          safeArray(section.fields).forEach(field => {
             resetData[field.name] = field.defaultValue || '';
           });
         });
@@ -75,8 +77,8 @@ const GodownCreate = () => {
 
   const handleCancel = () => {
     const resetData = {};
-    config.sections.forEach(section => {
-      section.fields.forEach(field => {
+    sections.forEach(section => {
+      safeArray(section.fields).forEach(field => {
         resetData[field.name] = field.defaultValue || '';
       });
     });
@@ -88,9 +90,9 @@ const GodownCreate = () => {
     <MasterFormLayout title="Godown Creation" onSave={handleSubmit} onCancel={handleCancel}>
       {message && <div className={`message ${messageType}`}>{message}</div>}
 
-      {config.sections.map((section, secIndex) => (
+      {sections.map((section, secIndex) => (
         <FormSection key={secIndex} title={section.title}>
-          {section.fields.map((field, fieldIndex) => (
+          {safeArray(section.fields).map((field, fieldIndex) => (
             <SmartField 
               key={fieldIndex} 
               field={field} 

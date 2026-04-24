@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api.js';
-import { MASTER_CONFIG } from '../utils/masterFields.js';
+import { MASTER_CONFIG } from '../utils/masterConfig.js';
+import { safeArray } from '../utils/safeArray.js';
 import MasterFormLayout from './master/MasterFormLayout';
 import { FormSection } from './master/FormSection';
 import SmartField from './master/SmartField';
 import './master/master.css';
 
 const DeductionSalesCreate = () => {
-  const config = MASTER_CONFIG.deduction_sales;
+  const config = MASTER_CONFIG.deduction_sales || {};
+  const sections = safeArray(config.sections);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -19,8 +21,8 @@ const DeductionSalesCreate = () => {
 
   const getResetData = () => {
     const resetData = {};
-    config.sections.forEach(section => {
-      section.fields.forEach(field => {
+    sections.forEach(section => {
+      safeArray(section.fields).forEach(field => {
         resetData[field.name] = field.defaultValue || '';
       });
     });
@@ -69,9 +71,10 @@ const DeductionSalesCreate = () => {
   return (
     <MasterFormLayout title="Deduction Sales Creation" onSave={handleSubmit} onCancel={handleCancel}>
       {message && <div className={`message ${messageType}`}>{message}</div>}
-      {config.sections.map((section, secIndex) => (
+
+      {sections.map((section, secIndex) => (
         <FormSection key={secIndex} title={section.title}>
-          {section.fields.map((field, fieldIndex) => (
+          {safeArray(section.fields).map((field, fieldIndex) => (
             <SmartField 
               key={fieldIndex} 
               field={field} 
@@ -81,6 +84,7 @@ const DeductionSalesCreate = () => {
           ))}
         </FormSection>
       ))}
+
     </MasterFormLayout>
   );
 };

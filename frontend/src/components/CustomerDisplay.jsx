@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import { getMasters, deleteMaster } from '../services/masterservice';
 import MasterTableLayout from './master/MasterTableLayout';
 import './customer-display.css';
 
@@ -18,7 +18,7 @@ const CustomerDisplay = () => {
 
   const loadCustomers = async () => {
     try {
-      const result = await api.getMasters('customer_master');
+const result = await getMasters('customers');
       setCustomers(result.data || []);
     } catch (error) {
       console.error('Error loading customers:', error);
@@ -31,7 +31,7 @@ const CustomerDisplay = () => {
   const handleDelete = async (customer) => {
     if (!confirm('Are you sure?')) return;
     try {
-      await api.deleteMaster('customer_master', customer.id);
+await deleteMaster('customer_master', customer.id);
       loadCustomers();
     } catch (error) {
       alert('Delete error: ' + error.message);

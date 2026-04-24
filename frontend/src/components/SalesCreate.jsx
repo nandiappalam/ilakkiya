@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { createSale } from '../utils/api'
+import api from '../services/api.js'
 import { calculateTotals } from '../utils/taxCalc'
 import './SalesCreate.css'
 
@@ -75,10 +75,12 @@ const [rows, setRows] = useState([{}])
   }, [])
 
   const handleRowChange = useCallback((index, field, value) => {
-    const updatedRows = [...rows]
-    updatedRows[index][field] = value
-    setRows(updatedRows)
-  }, [rows])
+    setRows(prevRows => {
+      const updatedRows = [...prevRows]
+      updatedRows[index] = { ...updatedRows[index], [field]: value }
+      return updatedRows
+    })
+  }, [])
 
   const addRow = useCallback((newRow = {}) => {
     setRows(prev => [...prev, newRow])
@@ -140,10 +142,16 @@ const [rows, setRows] = useState([{}])
         amount: parseFloat(item.amount) || 0
       }))
 
-      const result = await createSale(formData, transformedItems, totals)
+      const result = await api('/entries/sale', { method: 'POST', body: { formData, items: transformedItems, totals } })
       
+      if (!result) {
+        console.error("❌ API failed (null response)");
+        setError('API failed (null response)');
+        return;
+      }
       if (result.success) {
         setSuccess('Sales created successfully!')
+
         setFormData({
           bill_no: '', date: new Date().toISOString().split('T')[0], pay_type: 'Credit',
           tax_type: 'Exclusive', type: '', lorry_no: '', p_o_no: '', driver: '',

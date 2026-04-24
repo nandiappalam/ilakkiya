@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api.js';
-import { MASTER_CONFIG } from '../utils/masterFields.js';
+import { MASTER_CONFIG } from '../utils/masterConfig.js';
+import { safeArray } from '../utils/safeArray.js';
 import MasterFormLayout from './master/MasterFormLayout';
 import { FormSection } from './master/FormSection';
 import SmartField from './master/SmartField';
 import './WeightCreate.css';
 
 const WeightCreate = () => {
-  const config = MASTER_CONFIG.weight;
+  const config = MASTER_CONFIG.weight || {};
+  const sections = safeArray(config.sections);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -19,8 +21,8 @@ const WeightCreate = () => {
 
   const getResetData = () => {
     const resetData = {};
-    config.sections.forEach(section => {
-      section.fields.forEach(field => {
+    sections.forEach(section => {
+      safeArray(section.fields).forEach(field => {
         resetData[field.name] = field.defaultValue || '';
       });
     });
@@ -69,9 +71,9 @@ const WeightCreate = () => {
   return (
     <MasterFormLayout title="Weight Creation" onSave={handleSubmit} onCancel={handleCancel}>
       {message && <div className={`message ${messageType}`}>{message}</div>}
-      {config.sections.map((section, secIndex) => (
+      {sections.map((section, secIndex) => (
         <FormSection key={secIndex} title={section.title}>
-          {section.fields.map((field, fieldIndex) => (
+          {safeArray(section.fields).map((field, fieldIndex) => (
             <SmartField 
               key={fieldIndex} 
               field={field} 

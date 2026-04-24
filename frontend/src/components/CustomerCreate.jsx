@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api.js';
-import { MASTER_CONFIG } from '../utils/masterFields.js';
+import { MASTER_CONFIG } from '../utils/masterConfig.js';
+import { safeArray } from '../utils/safeArray.js';
 import MasterFormLayout from './master/MasterFormLayout';
 import { FormSection, SmartField } from './master';
 import MasterActions from './master/MasterActions';
@@ -8,7 +9,8 @@ import './CustomerCreate.css';
 import './master/master.css';
 
 const CustomerCreate = () => {
-  const config = MASTER_CONFIG.customer;
+  const config = MASTER_CONFIG.customer || {};
+  const sections = safeArray(config.sections);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -28,8 +30,8 @@ const CustomerCreate = () => {
 
     // Init form
     const initialData = {};
-    config.sections.forEach(section => {
-      section.fields.forEach(field => {
+    sections.forEach(section => {
+      safeArray(section.fields).forEach(field => {
         initialData[field.name] = field.defaultValue || '';
       });
     });
@@ -54,8 +56,8 @@ const CustomerCreate = () => {
         setMessageType('success');
         // Reset
         const resetData = {};
-        config.sections.forEach(section => {
-          section.fields.forEach(field => {
+        sections.forEach(section => {
+          safeArray(section.fields).forEach(field => {
             resetData[field.name] = field.defaultValue || '';
           });
         });
@@ -76,8 +78,8 @@ const CustomerCreate = () => {
 
   const handleCancel = () => {
     const resetData = {};
-    config.sections.forEach(section => {
-      section.fields.forEach(field => {
+    sections.forEach(section => {
+      safeArray(section.fields).forEach(field => {
         resetData[field.name] = field.defaultValue || '';
       });
     });
@@ -89,9 +91,9 @@ const CustomerCreate = () => {
     <MasterFormLayout title="Customer Creation" onSave={handleSubmit} onCancel={handleCancel}>
       {message && <div className={`message ${messageType}`}>{message}</div>}
 
-      {config.sections.map((section, secIndex) => (
+      {sections.map((section, secIndex) => (
         <FormSection key={secIndex} title={section.title}>
-          {section.fields.map((field, fieldIndex) => (
+          {safeArray(section.fields).map((field, fieldIndex) => (
             <SmartField 
               key={fieldIndex} 
               field={field} 

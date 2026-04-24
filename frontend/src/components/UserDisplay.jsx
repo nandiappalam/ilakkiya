@@ -25,7 +25,7 @@ import {
   ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import api from '../utils/api.js';
+import { getMasters } from '../services/api.js';
 
 const themeColors = {
   primary: '#1f4fb2',
@@ -83,7 +83,7 @@ const UserDisplay = () => {
     }
 
     try {
-      const result = await api.deleteMaster("user_master", userId);
+      const result = await api('companies/${userId}', { method: 'DELETE' });
 
       if (result.success !== false) {
         setUsers(users.filter(u => u.id !== userId));

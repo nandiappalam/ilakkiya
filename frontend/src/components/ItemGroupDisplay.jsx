@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getItemGroups, deleteItemGroup } from '../utils/api'
+import { getMasters, deleteMaster } from '../services/masterservice'
 import MasterTableLayout from './master/MasterTableLayout'
 
 const ItemGroupDisplay = () => {
@@ -14,7 +14,7 @@ const ItemGroupDisplay = () => {
 
   const loadGroups = async () => {
     try {
-      const result = await getItemGroups()
+const result = await getMasters('item_groups')
       if (result.success) {
         setGroups(result.data)
       } else {
@@ -31,7 +31,7 @@ const ItemGroupDisplay = () => {
     if (!confirm('Are you sure you want to delete this item group?')) return
 
     try {
-      const result = await deleteItemGroup(group.id)
+const result = await deleteMaster('item_group_master', group.id)
       if (result.success) {
         alert('Item group deleted successfully')
         loadGroups()

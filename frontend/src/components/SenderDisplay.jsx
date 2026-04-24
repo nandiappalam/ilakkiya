@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import api from '../utils/api.js'
+import { getMasters, deleteMaster } from '../services/masterservice'
 import MasterTableLayout from './master/MasterTableLayout'
 
 const SenderDisplay = () => {
@@ -16,7 +16,7 @@ const SenderDisplay = () => {
 
   const loadSenders = async () => {
     try {
-      const result = await api.getSenders()
+const result = await getMasters('senders')
       if (result.success) {
         setSenders(result.data)
       } else {
@@ -33,7 +33,7 @@ const SenderDisplay = () => {
     if (!window.confirm('Are you sure you want to delete this sender?')) return
 
     try {
-      const result = await api.deleteMaster('sender_master', sender.id)
+const result = await deleteMaster('sender_master', sender.id)
       if (result.success) {
         alert('Sender deleted successfully')
         loadSenders()

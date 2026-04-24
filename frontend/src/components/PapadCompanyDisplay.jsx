@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../utils/api.js'
+import { getMasters, deleteMaster } from '../services/masterservice.js';
 import MasterTableLayout from './master/MasterTableLayout'
 
 const PapadCompanyDisplay = () => {
@@ -18,7 +18,7 @@ const PapadCompanyDisplay = () => {
 
   const loadCompanies = async () => {
     try {
-      const result = await api.getPapadCompanies()
+      const result = await getMasters('papad_companies')
       if (result.success) {
         setCompanies(result.data)
       } else {
@@ -35,7 +35,7 @@ const PapadCompanyDisplay = () => {
     if (!confirm('Are you sure you want to delete this company?')) return
 
     try {
-      const result = await api.deleteMaster('papad_company_master', company.id)
+      const result = await deleteMaster('papad_companies', company.id)
       if (result.success) {
         alert('Company deleted successfully')
         loadCompanies()

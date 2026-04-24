@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { login as apiLogin } from '../utils/api';
+import api from '../services/api.js';
 import {
   Box,
   Card,
@@ -31,7 +31,7 @@ const themeColors = {
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, selectedCompany } = useAuth();
+  const { login: setAuthLogin, selectedCompany } = useAuth();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -41,10 +41,10 @@ const LoginPage = () => {
 
   // Redirect to company selection if no company is selected
   useEffect(() => {
-    if (!selectedCompany) {
+    if (selectedCompany === null) {
       navigate('/company-select');
     }
-  }, [selectedCompany, navigate]);
+  }, [selectedCompany]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,7 +53,7 @@ const LoginPage = () => {
 
     if (!username || !password) {
       setError('Please enter username and password');
-      setLoading(false);
+      //setLoading(false);
       return;
     }
 
@@ -66,21 +66,21 @@ const LoginPage = () => {
     try {
       // Use dual-mode API (works in both browser and Tauri)
       // Pass company_id along with username and password
-      const response = await apiLogin({
+      const response = await api({
         username,
         password,
         company_id: selectedCompany.id
       });
       // Update auth context with login data
-      login(response);
+      setAuthLogin(response);
 
       // Navigate to the dashboard (protected route)
       navigate('/dashboard');
     } 
     catch (err) {
-      setError('Invalid username or password for this company');
-      console.error('Login error:', err);}
-{
+      //setError('Invalid username or password for this company');
+      console.error('Login error:', err);
+
       // Check if response indicates no user exists for this company
       if (err.response && err.response.status === 404 && err.response.data.message === 'no_user_exists') {
         // No users exist for this company - redirect to create first user
@@ -89,9 +89,10 @@ const LoginPage = () => {
       }
       
       setError('Invalid username or password for this company');
-      console.error('Login error:', err);
+    } 
+    finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

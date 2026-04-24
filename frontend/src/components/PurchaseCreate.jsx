@@ -65,10 +65,12 @@ const totalsData = calculateTotals(rows, formData.tax_type, formData.tax_percent
   }
 
 const handleRowChange = useCallback((index, key, value) => {
-    const newRows = [...rows];
-    newRows[index][key] = value;
-    setRows(newRows);
-  }, [rows]);
+    setRows(prevRows => {
+      const newRows = [...prevRows];
+      newRows[index] = { ...newRows[index], [key]: value };
+      return newRows;
+    });
+  }, []);
 
   const addRow = useCallback((newRow = {}) => {
     setRows(prev => [...prev, newRow]);

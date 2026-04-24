@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import api from '../utils/api.js'
+import { getMasters, deleteMaster } from '../services/masterservice'
 import MasterTableLayout from './master/MasterTableLayout'
 
 const LedgerDisplay = () => {
@@ -16,7 +16,7 @@ const LedgerDisplay = () => {
 
   const fetchLedgers = async () => {
     try {
-      const result = await api.getMasters("ledgermaster")
+const result = await getMasters("ledgers")
       if (result.success) {
         setLedgers(result.data)
       } else {
@@ -33,7 +33,7 @@ const LedgerDisplay = () => {
   const handleDelete = async (ledger) => {
     if (!window.confirm('Are you sure you want to delete this ledger?')) return
     try {
-      const result = await api.deleteLedger(ledger.id)
+const result = await deleteMaster("ledgermaster", ledger.id)
       if (result.success) {
         alert('Deleted successfully')
         fetchLedgers()

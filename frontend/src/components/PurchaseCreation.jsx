@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { createPurchase } from '../utils/api'
+import api from '../services/api.js'
 import './SalesCreate.css'
 
 // Import modular components from entry folder
@@ -81,15 +81,16 @@ const PurchaseCreation = () => {
     setSuccess('')
 
     try {
-      const result = await createPurchase(formData, items, {
-        bill_amt: formData.bill_amt,
-        tax_amt: formData.tax_amt,
-        total_amt: formData.total_amt,
-        deduction: formData.deduction
-      })
+      const result = await api('/purchases', { method: 'POST', body: { formData, items, totals: { bill_amt: formData.bill_amt, tax_amt: formData.tax_amt, total_amt: formData.total_amt, deduction: formData.deduction } } });
       
+      if (!result) {
+        console.error("❌ API failed (null response)");
+        setError('API failed (null response)');
+        return;
+      }
       if (result.success) {
         setSuccess('Purchase created successfully!')
+
         setFormData({
           bill_no: '', date: new Date().toISOString().split('T')[0], pay_type: 'Credit',
           tax_type: 'Exclusive', type: '', lorry_no: '', p_o_no: '', driver: '',
@@ -100,7 +101,7 @@ const PurchaseCreation = () => {
         setItems([{ item_name: '', lot_no: '', qty: '', weight: '', box: '', rate: '', disc: '', tax: '', amount: '' }])
         setTimeout(() => setSuccess(''), 3000)
       } else {
-        setError(result.message || 'Error creating purchase')
+        setError('Error creating purchase')
       }
     } catch (err) {
       setError(err.message || 'Error creating purchase')
@@ -118,7 +119,7 @@ const PurchaseCreation = () => {
     { name: 'tax_type', label: 'Tax Type', type: 'text', value: formData.tax_type },
     { name: 'type', label: 'Type', type: 'text', value: formData.type },
     // Column 2 - Purchase specific fields
-    { name: 'supplier', label: 'Supplier', type: 'text', value: formData.supplier },
+    { name: 'supplier', label: 'Supplier', type: 'masterSelect', masterType: 'suppliers', value: formData.supplier },
     { name: 'inv_no', label: 'Inv No', type: 'text', value: formData.inv_no },
     { name: 'inv_date', label: 'Inv Date', type: 'date', value: formData.inv_date },
     { name: 'godown', label: 'Godown', type: 'text', value: formData.godown },
@@ -135,7 +136,7 @@ const PurchaseCreation = () => {
   // Note: item_name uses 'masterSelect' to fetch from items master
   // For Purchase: lot_no is auto-generated (read-only)
   const itemColumns = [
-    { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'item_master' },
+    { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'items' },
     { key: 'lot_no', title: 'Lot No', type: 'text', readOnly: true, placeholder: 'Auto-generated' },
     { key: 'qty', title: 'Qty', type: 'number' },
     { key: 'weight', title: 'Weight', type: 'number' },
@@ -191,6 +192,7 @@ const PurchaseCreation = () => {
           onAddRow={addItemRow}
           onDeleteRow={deleteItemRow}
           showActions={true}
+          lotMode="auto"
           sectionTitle=""
         />
 
@@ -217,3 +219,4 @@ const PurchaseCreation = () => {
 }
 
 export default PurchaseCreation
+

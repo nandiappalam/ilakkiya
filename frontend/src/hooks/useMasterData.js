@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import api, { safeArray } from '../utils/api.js';
+import { getMasters, safeArray } from '../services/masterservice.js';
 
 /**
  * useMasterData - Custom hook for caching master data dropdowns
- * Prevents multiple fetches for same master type
- * Auto-refreshes on focus/interval for latest data
+ * Uses generic getMasters(type) - no mapping needed
  */
 export const useMasterData = (masterType) => {
   const [data, setData] = useState([]);
@@ -21,9 +20,13 @@ export const useMasterData = (masterType) => {
     setLoading(true);
     setError(null);
     try {
-      const table = api.MASTER_TABLES[masterType] || masterType;
-      const result = await api.getMasters(table);
-      const masters = safeArray(result);
+      const result = await getMasters(masterType);
+      if (!result) {
+        setData([]);
+        return;
+      }
+      const masters = safeArray(result.data || result);
+      setData(masters);
       setData(masters);
     } catch (err) {
       console.error(`Failed to fetch ${masterType}:`, err);
@@ -44,7 +47,7 @@ export const useMasterData = (masterType) => {
     const handleFocus = () => fetchMaster();
 
     if (masterType) {
-      refreshInterval = setInterval(fetchMaster, 5 * 60 * 1000); // 5min
+      refreshInterval = setInterval(fetchMaster, 5 * 60 * 1000);
       window.addEventListener('focus', handleFocus);
     }
 
@@ -56,11 +59,6 @@ export const useMasterData = (masterType) => {
 
   const refresh = useCallback(() => fetchMaster(), [fetchMaster]);
 
-  return {
-    data,
-    loading,
-    error,
-    refresh
-  };
+  return { data, loading, error, refresh };
 };
 

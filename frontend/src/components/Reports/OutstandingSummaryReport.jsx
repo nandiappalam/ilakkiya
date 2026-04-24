@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getOutstandingSummaryReport } from '../../utils/api'
+import api from '../../utils/api.js'
 import './ReportPage.css'
 
 /**
@@ -25,7 +25,7 @@ const OutstandingSummaryReport = () => {
     setError('')
     
     try {
-      const result = await getOutstandingSummaryReport({ as_on_date: asOnDate })
+      const result = await api('/reports/outstanding-summary', { params: { as_on_date: asOnDate } })
       
       if (result.success && Array.isArray(result.data)) {
         setReportData(result.data)

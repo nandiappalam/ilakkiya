@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getProfitLossReport } from '../../utils/api'
+import api from '../../utils/api.js'
 import './ReportPage.css'
 
 /**
@@ -33,7 +33,7 @@ const ProfitLossReport = () => {
       if (fromDate) params.from_date = fromDate
       if (toDate) params.to_date = toDate
       
-      const result = await getProfitLossReport(params)
+      const result = await api('/reports/profit-loss', { params })
       
       if (result.success && result.data && typeof result.data === 'object') {
         setReportData(result.data)

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import api from '../utils/api.js'
+import { getMasters, deleteMaster } from '../services/masterservice'
 import MasterTableLayout from './master/MasterTableLayout'
 
 const LedgerGroupDisplay = () => {
@@ -16,7 +16,7 @@ const LedgerGroupDisplay = () => {
 
   const loadLedgerGroups = async () => {
     try {
-      const result = await api.getLedgerGroups()
+const result = await getMasters('ledger_groups')
       if (result.success) {
         setLedgerGroups(result.data || [])
       }
@@ -31,7 +31,7 @@ const LedgerGroupDisplay = () => {
     if (!window.confirm('Are you sure you want to delete this ledger group?')) return
 
     try {
-      const result = await api.deleteMaster('ledger_group_master', group.id)
+const result = await deleteMaster('ledger_group_master', group.id)
       if (result.success) {
         alert('Ledger group deleted successfully')
         loadLedgerGroups()

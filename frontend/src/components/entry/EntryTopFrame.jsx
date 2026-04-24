@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../utils/api.js';
+import { getMasters } from '../../services/api.js';
+
 
 
 /**
@@ -159,13 +160,10 @@ const MasterFieldWrapper = ({ field, data, onChange, autoFillFields = [], genera
         setLoading(true);
         try {
           const tableName = masterTableMap[field.masterType] || field.masterType;
-          let query = `SELECT * FROM ${tableName}`;
-          let params = [];
-          
-          const rawResult = await api.getMasters(tableName);
+          const rawResult = await getMasters(tableName);
+          if (!rawResult) return; // 🔥 Safe exit
+
           const resultData = rawResult.data || [];
-
-
           if (DEBUG) {
             console.log(`[Master ${field.masterType}]`, resultData.length, 'options');
           }
@@ -186,7 +184,7 @@ const MasterFieldWrapper = ({ field, data, onChange, autoFillFields = [], genera
 
     try {
       const tableName = masterTableMap[field.masterType] || field.masterType;
-      const result = await api.getMasters(tableName);
+      const result = await getMasters(tableName);
       const masterRecord = (result.data || []).find(r => r.id == selectedId) || null;
 
       setSelectedMaster(masterRecord);

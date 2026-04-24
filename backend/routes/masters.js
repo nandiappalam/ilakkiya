@@ -64,6 +64,8 @@ const masterTypeAliases = {
   senders: { table: 'sender_group_master', displayField: 'name', hasStatus: true },
   transport: { table: 'transport_master', displayField: 'name', hasStatus: true },
   transports: { table: 'transport_master', displayField: 'name', hasStatus: true },
+  godown: { table: 'godown_master', displayField: 'godown_name', hasStatus: false },
+  godowns: { table: 'godown_master', displayField: 'godown_name', hasStatus: false },
   // Legacy table names also supported
   item_master: { table: 'item_master', displayField: 'item_name', hasStatus: true },
   customer_master: { table: 'customer_master', displayField: 'name', hasStatus: true },
@@ -94,9 +96,10 @@ const masterTypeAliases = {
 const masterTables = {
   item_master: {
     table: 'item_master',
-    fields: ['item_code', 'item_name', 'print_name', 'item_group', 'tax', 'hsn_code', 'status'],
+    fields: ['item_code', 'item_name', 'print_name', 'item_group', 'type', 'tax', 'hsn_code', 'ed_percent', 'status'],
     uniqueField: 'item_code'
   },
+
   item_groups: {
     table: 'item_groups',
     fields: ['group_code', 'group_name', 'print_name', 'tax'],
@@ -181,6 +184,11 @@ const masterTables = {
     table: 'ptrans_master',
     fields: ['name', 'print_name', 'status'],
     uniqueField: 'name'
+  },
+  godown_master: {
+    table: 'godown_master',
+    fields: ['godown_name', 'print_name'],
+    uniqueField: 'godown_name'
   }
 }
 
@@ -221,6 +229,7 @@ router.get('/:type', async (req, res) => {
     
     if (!type) {
       return res.status(400).json({ 
+        success: false,
         message: 'Invalid master type. Valid types: items, item_groups, deduction_sales, deduction_purchase, customers, suppliers, flour_mills, papad_companies, weights, ledger_groups, ledgers, areas, cities, consignees, ptrans, senders, transports' 
       })
     }
@@ -261,7 +270,7 @@ router.get('/:type', async (req, res) => {
       name: row[displayField] || row.name || row.item_name || row.ded_name || row.flourmill || ''
     }))
 
-    res.json(simplified)
+    res.json({ success: true, data: simplified })
   } catch (error) {
     console.error('Error fetching master records:', error)
     res.json([])
@@ -287,7 +296,6 @@ router.get('/all/:table', async (req, res) => {
     res.status(500).json({ message: 'Error fetching records', error: error.message })
   }
 })
-
 
 // ============================================================================
 // GET SINGLE RECORD BY ID
@@ -317,57 +325,47 @@ router.get('/record/:table/:id', async (req, res) => {
 // ============================================================================
 // POST CREATE NEW RECORD - Short form /:table (matches frontend call)
 // ============================================================================
-router.post('/:table', async (req, res) => {
+router.post("/:table", async (req, res) => {
   try {
-    const tableName = req.params.table
-    const tableConfig = masterTables[tableName]
+    const { table } = req.params;
+    const data = req.body;
 
-    if (!tableConfig) {
-      return res.status(400).json({ message: 'Invalid master table' })
+    console.log("📦 Incoming:", data);
+
+    if (!data || Object.keys(data).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Empty request body",
+      });
     }
 
-    const data = req.body
-    const fields = tableConfig.fields
-    const values = fields.map(field => {
-      // Handle status default
-      if (field === 'status' && !data[field]) {
-        return 'Active'
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+
+    const placeholders = keys.map(() => "?").join(",");
+
+    const query = `INSERT INTO ${table} (${keys.join(",")}) VALUES (${placeholders})`;
+
+    db.run(query, values, function (err) {
+      if (err) {
+        console.error("❌ DB ERROR:", err);
+        return res.status(500).json({
+          success: false,
+          error: err.message,
+        });
       }
-      return data[field] || null
-    })
 
-    // Check for required fields
-    if (fields.includes('name') && !data.name && !data.flourmill) {
-      return res.status(400).json({ message: 'Name is required' })
-    }
-    if (fields.includes('item_name') && !data.item_name) {
-      return res.status(400).json({ message: 'Item name is required' })
-    }
-    if (fields.includes('group_name') && !data.group_name) {
-      return res.status(400).json({ message: 'Group name is required' })
-    }
-    if (fields.includes('ded_name') && !data.ded_name) {
-      return res.status(400).json({ message: 'Deduction name is required' })
-    }
-
-    const placeholders = fields.map(() => '?').join(', ')
-    const query = `INSERT INTO ${tableConfig.table} (${fields.join(', ')}) VALUES (${placeholders})`
-
-    const result = await db.run(query, values)
-
-    res.status(201).json({
-      message: 'Record created successfully',
-      id: result.lastID
-    })
-  } catch (error) {
-    console.error('Error creating master record:', error)
-    if (error.message && error.message.includes('UNIQUE constraint failed')) {
-      res.status(400).json({ message: 'Record with this identifier already exists' })
-    } else {
-      res.status(500).json({ message: 'Error creating record', error: error.message })
-    }
+      res.json({
+        success: true,
+        id: this.lastID,
+      });
+    });
+  } catch (err) {
+    console.error("❌ SERVER ERROR:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
-})
+});
+
 
 // ============================================================================
 // POST CREATE NEW RECORD - Legacy form /record/:table
@@ -411,16 +409,18 @@ router.post('/record/:table', async (req, res) => {
     const result = await db.run(query, values)
 
     res.status(201).json({
-      message: 'Record created successfully',
-      id: result.lastID
+      success: true,
+      data: { id: result.lastID },
+      message: 'Record created successfully'
     })
   } catch (error) {
-    console.error('Error creating master record:', error)
-    if (error.message && error.message.includes('UNIQUE constraint failed')) {
-      res.status(400).json({ message: 'Record with this identifier already exists' })
-    } else {
-      res.status(500).json({ message: 'Error creating record', error: error.message })
-    }
+    console.error("❌ DB INSERT ERROR:", error.message);
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 })
 
@@ -447,9 +447,9 @@ router.put('/:table/:id', async (req, res) => {
     const result = await db.run(query, values)
 
     if (result.changes > 0) {
-      res.json({ message: 'Record updated successfully' })
+      res.json({ success: true, message: 'Record updated successfully' })
     } else {
-      res.status(404).json({ message: 'Record not found' })
+      res.status(404).json({ success: false, message: 'Record not found' })
     }
   } catch (error) {
     console.error('Error updating master record:', error)
@@ -505,9 +505,9 @@ router.delete('/:table/:id', async (req, res) => {
     const result = await db.run(`DELETE FROM ${tableConfig.table} WHERE id = ?`, [req.params.id])
 
     if (result.changes > 0) {
-      res.json({ message: 'Record deleted successfully' })
+      res.json({ success: true, message: 'Record deleted successfully' })
     } else {
-      res.status(404).json({ message: 'Record not found' })
+      res.status(404).json({ success: false, message: 'Record not found' })
     }
   } catch (error) {
     console.error('Error deleting master record:', error)
@@ -540,4 +540,15 @@ router.delete('/record/:table/:id', async (req, res) => {
   }
 })
 
+// /lots/next - Fallback lot generator
+router.get('/lots/next', async (req, res) => {
+  try {
+  const nextLot = "LOT" + Date.now().toString().slice(-4);
+    res.json({ success: true, data: { lot_no: nextLot } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router
+

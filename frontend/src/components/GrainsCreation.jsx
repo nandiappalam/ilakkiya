@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './GrainsCreation.css';
-import * as api from '../utils/api';
+import api from '../services/api.js';
 
 // Import modular entry components
 import { EntryTopFrame, EntryItemsTable, EntryActions, EntrySection } from './entry'
@@ -101,7 +101,7 @@ const GrainsCreation = () => {
         input_items: inputItems, 
         output_items: outputItems 
       };
-      const result = await api.createGrain(data);
+      const result = await api('entries/grain', { method: 'POST', body: data });
 
       if (result && result.success) {
         setMessage('Grind creation saved successfully!');

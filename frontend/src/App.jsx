@@ -73,6 +73,7 @@ import TransportDisplay from './components/TransportDisplay'
 import GodownCreate from './components/master/GodownCreate'
 import GodownDisplay from './components/master/GodownDisplay'
 
+
 // Financial Year
 import FinancialYearDisplay from './components/FinancialYearDisplay'
 
@@ -95,8 +96,14 @@ import AdvanceDisplay from './components/AdvanceDisplay'
 import OpenCreate from './components/OpenCreate'
 import WeightConversionCreate from './components/WeightConversionCreate'
 import WeightConversionDisplay from './components/WeightConversionDisplay'
+import VoucherCreate from './modules/vouchers/VoucherCreate'
+import VoucherList from './modules/vouchers/VoucherList'
 import StockReport from './components/StockReport'
 import ReportPage from './components/ReportPage'
+
+// Vehicle Movement - NEW
+import VehicleCreate from './modules/vehicle/VehicleCreate'
+import VehicleList from './modules/vehicle/VehicleList'
 
 // Reports
 import { 
@@ -146,14 +153,12 @@ const AppLayout = () => {
   return (
     <>
       <Navigation />
-      <Box sx={{
-        mt: '64px',
-        width: '100%',
-        minHeight: 'calc(100vh - 64px)',
-        overflow: 'auto',
-        padding: { xs: 2, sm: 3 },
-        boxSizing: 'border-box'
-      }}>
+        <Box sx={{
+          pt: '64px',
+          width: '100%',
+          padding: { xs: 2, sm: 3 },
+          boxSizing: 'border-box'
+        }}> 
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -212,6 +217,8 @@ const AppLayout = () => {
           <Route path="/entry/papad-in-display" element={<PapadInDisplay />} />
           <Route path="/entry/sales-create" element={<SalesCreate />} />
           <Route path="/entry/sales-display" element={<SalesDisplayPage />} />
+          <Route path="/entry/sales-order-create" element={<SalesCreate />} />
+          <Route path="/entry/sales-order-display" element={<SalesDisplayPage />} />
           <Route path="/entry/sales-export-create" element={<SalesExportCreate />} />
           <Route path="/entry/sales-export-display" element={<SalesExportDisplay />} />
           <Route path="/entry/sales-export-order-create" element={<SalesExportOrderCreate />} />
@@ -229,8 +236,14 @@ const AppLayout = () => {
           <Route path="/entry/advance-create" element={<AdvanceCreate />} />
           <Route path="/entry/advance-display" element={<AdvanceDisplay />} />
           <Route path="/entry/open-create" element={<OpenCreate />} />
-          <Route path="/entry/weight-converstion-create" element={<WeightConversionCreate />} />
-          <Route path="/entry/weight-converstion-display" element={<WeightConversionDisplay />} />
+          <Route path="/entry/weight-conversion-create" element={<WeightConversionCreate />} />
+          <Route path="/entry/weight-conversion-display" element={<WeightConversionDisplay />} />
+          <Route path="/entry/voucher-create" element={<VoucherCreate />} />
+          <Route path="/entry/voucher-display" element={<VoucherList />} />
+          
+          {/* Vehicle Movement - NEW */}
+          <Route path="/entry/vehicle-movement-create" element={<VehicleCreate />} />
+          <Route path="/entry/vehicle-movement-display" element={<VehicleList />} />
 
           {/* Master Routes */}
           <Route path="/master/item-create" element={<ItemCreate />} />
@@ -247,8 +260,8 @@ const AppLayout = () => {
           <Route path="/master/ledger-display" element={<LedgerDisplay />} />
           <Route path="/master/consignee-create" element={<ConsigneeCreate />} />
           <Route path="/master/consignee-display" element={<ConsigneeDisplay />} />
-          <Route path="/master/ptrans-create" element={<PTransCreate />} />
-          <Route path="/master/ptrans-display" element={<PTransDisplay />} />
+          <Route path="/master/p-trans-create" element={<PTransCreate />} />
+          <Route path="/master/p-trans-display" element={<PTransDisplay />} />
           <Route path="/master/deduction-purchase-create" element={<DeductionPurchaseCreate />} />
           <Route path="/master/deduction-purchase-display" element={<DeductionPurchaseDisplay />} />
           <Route path="/master/deduction-sales-create" element={<DeductionSalesCreate />} />
@@ -257,6 +270,8 @@ const AppLayout = () => {
           <Route path="/master/flour-mill-display" element={<FlourMillDisplay />} />
           <Route path="/master/papad-company-create" element={<PapadCompanyCreate />} />
           <Route path="/master/papad-company-display" element={<PapadCompanyDisplay />} />
+          <Route path="/master/weight-create" element={<WeightCreate />} />
+          <Route path="/master/weight-display" element={<WeightDisplay />} />
           <Route path="/master/ledger-group-create" element={<LedgerGroupCreate />} />
           <Route path="/master/ledger-group-display" element={<LedgerGroupDisplay />} />
           <Route path="/master/sender-create" element={<SenderCreate />} />
@@ -265,6 +280,7 @@ const AppLayout = () => {
           <Route path="/master/transport-display" element={<TransportDisplay />} />
           <Route path="/master/godown-create" element={<GodownCreate />} />
           <Route path="/master/godown-display" element={<GodownDisplay />} />
+
           <Route path="/master/company-display" element={<CompanyDisplay />} />
 
           <Route path="/master/suppliers-create" element={<SupplierCreate />} />

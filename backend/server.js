@@ -9,7 +9,7 @@ const db = require('./config/database')
 const app = express()
 // Use PORT 3000 for development mode
 // For Tauri embedded mode, this can be changed to 0
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 5000
 let actualPort = PORT
 
 // Middleware
@@ -61,6 +61,7 @@ const openRouter = require('./routes/open')
 const companiesRouter = require('./routes/companies')
 const authRouter = require('./routes/auth')
 const dbRouter = require('./routes/db')
+const vehicleMovementsRouter = require('./routes/vehicle-movements')
 
 app.use('/api/purchases', purchasesRouter)
 app.use('/api/purchase-returns', purchaseReturnsRouter)
@@ -90,7 +91,9 @@ app.use('/api/companies', companiesRouter)
 app.use('/api/auth', authRouter)
 
 // Database query API (for Tauri-style queries)
+app.use('/api/vouchers', require('./routes/vouchers'))
 app.use('/api/db', dbRouter)
+app.use('/api/vehicle-movements', vehicleMovementsRouter)
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -387,6 +390,16 @@ async function initializeMasterTables() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE,
         print_name TEXT,
+        status TEXT DEFAULT 'Active'
+      )`
+    },
+    {
+      name: 'godown_master',
+      sql: `CREATE TABLE IF NOT EXISTS godown_master (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        godown_name TEXT UNIQUE,
+        print_name TEXT,
+        location TEXT,
         status TEXT DEFAULT 'Active'
       )`
     },

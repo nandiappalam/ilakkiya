@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import api from '../utils/api.js'
+import { getMasters, deleteMaster } from '../services/masterservice'
 import MasterTableLayout from './master/MasterTableLayout'
 
 const DeductionSalesDisplay = () => {
@@ -16,7 +16,7 @@ const DeductionSalesDisplay = () => {
 
   const fetchDeductions = async () => {
     try {
-      const result = await api.getDeductionSales()
+const result = await getMasters('deduction_sales')
       if (result.success) {
         setDeductions(result.data)
       } else {
@@ -33,7 +33,7 @@ const DeductionSalesDisplay = () => {
     if (!window.confirm('Are you sure you want to delete this deduction?')) return
 
     try {
-      const result = await api.deleteMaster('deduction_sales_master', deduction.id)
+const result = await deleteMaster('deduction_sales_master', deduction.id)
       if (result.success) {
         alert('Deduction deleted successfully')
         fetchDeductions()

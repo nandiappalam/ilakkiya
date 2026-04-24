@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { getCities, updateCity } from '../utils/api'
-import { safeArray } from '../utils/api'
+import api from '../utils/api'
+// safeArray not needed anymore
 
 // Import modular master components
 import { MasterFormLayout, MasterFieldGroup, MasterActions } from './master'
@@ -31,10 +31,10 @@ const CityUpdate = () => {
 
   const loadCityData = async (id) => {
     try {
-      const result = await getCities()
+      const result = await api.getCities()
       
       // Use safeArray utility for safe data handling
-      const cities = safeArray(result);
+      const cities = Array.isArray(result) ? result : [];
       
       const city = cities.find(c => c.id == id)
       if (city) {
@@ -68,7 +68,7 @@ const CityUpdate = () => {
     }
 
     try {
-      const result = await updateCity(parseInt(cityId), formData)
+      const result = await api.updateMaster('city_master', parseInt(cityId), formData)
 
       if (result.success) {
         setSuccess('City updated successfully')

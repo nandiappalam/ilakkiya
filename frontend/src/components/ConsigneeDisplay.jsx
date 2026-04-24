@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../utils/api.js'
+import { getMasters, deleteMaster } from '../services/masterservice'
 import MasterTableLayout from './master/MasterTableLayout'
 
 const ConsigneeDisplay = () => {
@@ -16,7 +16,7 @@ const ConsigneeDisplay = () => {
 
   const loadConsignees = async () => {
     try {
-      const result = await api.getConsignees()
+const result = await getMasters('consignees')
       if (result.success) {
         setConsignees(result.data)
       } else {
@@ -33,7 +33,7 @@ const ConsigneeDisplay = () => {
     if (!confirm('Are you sure you want to delete this consignee?')) return
 
     try {
-      const result = await api.deleteMaster('consignee_group_master', consignee.id)
+const result = await deleteMaster('consignee_group_master', consignee.id)
       if (result.success) {
         alert('Consignee deleted successfully')
         loadConsignees()

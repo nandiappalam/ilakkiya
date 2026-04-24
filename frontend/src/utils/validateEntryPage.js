@@ -21,14 +21,16 @@ export const validateEntryConfig = (fields = [], columns = []) => {
 
   // Check table columns
   columns.forEach(c => {
-    const isMaster = MASTER_FIELD_TYPES[c.key];
-    if (isMaster && c.type !== 'masterSelect') {
+    const keyLower = c.key.toLowerCase();
+    const isMaster = MASTER_FIELD_TYPES[keyLower];
+    if (isMaster && c.type !== 'masterSelect' && keyLower !== 'weight') {
       errors.push(`Column "${c.key}" must be type: 'masterSelect'`);
     }
-    if (isMaster && !c.masterType) {
+    if (isMaster && !c.masterType && keyLower !== 'weight') {
       warnings.push(`Column "${c.key}" should have masterType: '${isMaster}'`);
     }
   });
+
 
   if (errors.length) {
     console.error('❌ ENTRY VALIDATION FAILED:', errors);

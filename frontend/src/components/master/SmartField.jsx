@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import api from "../../utils/api.js";
-import { MASTER_FIELD_TYPES, FIELD_TYPES } from "../../utils/masterFields.js";
+import { getMasters } from "../../services/masterservice.js";
+import { MASTER_FIELD_TYPES, FIELD_TYPES, safeArray } from "../../utils/masterFields.js";
 import "./master.css";
 
 export const SmartField = ({ 
@@ -18,15 +18,33 @@ export const SmartField = ({
   const finalValue = value !== undefined ? value : field.defaultValue || '';
 
   useEffect(() => {
-    if (isMaster && !isReadonly) {
-      setLoading(true);
-      api.getMasters(isMaster)
-        .then(res => {
-          setOptions(res.data || []);
-        })
-        .catch(err => console.error(`Failed to load ${isMaster}:`, err))
-        .finally(() => setLoading(false));
-    }
+    const loadData = async () => {
+      try {
+        if (!isMaster || isReadonly) return;
+        setLoading(true);
+
+        // ✅ STATIC DROPDOWN (like statuses)
+        if (Array.isArray(MASTER_FIELD_TYPES[isMaster])) {
+          const staticOptions = MASTER_FIELD_TYPES[isMaster].map((val) => ({
+            id: val,
+            name: val,
+          }));
+          setOptions(staticOptions);
+          setLoading(false);
+          return; // 🚨 CRITICAL: Skip API call
+        }
+
+        // ✅ DYNAMIC (API call)
+        const data = await getMasters(isMaster === 'item' ? 'items' : isMaster);
+        setOptions(safeArray(data));
+      } catch (err) {
+        console.error(`Failed to load ${isMaster}:`, err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, [isMaster]);
 
   const handleChange = (e) => {
@@ -67,12 +85,19 @@ export const SmartField = ({
       ) : fieldType === 'select' ? (
         <select {...inputProps}>
           <option value="">Select {labelText}</option>
-          {options.map(opt => (
-            <option key={opt.id || opt.value} value={opt.id || opt.value}>
-              {opt.name || opt.label || opt.value}
-            </option>
-          ))}
+          {safeArray(field.options || options).map(opt => {
+            // Handle both string arrays ['Active'] and object arrays [{label, value}]
+            const isString = typeof opt === 'string';
+            const optValue = isString ? opt : (opt.value || opt.id || '');
+            const optLabel = isString ? opt : (opt.label || opt.name || opt.value || opt.id || '');
+            return (
+              <option key={optValue} value={optValue}>
+                {optLabel}
+              </option>
+            );
+          })}
         </select>
+
       ) : fieldType === 'textarea' ? (
         <textarea {...inputProps} rows={3} />
       ) : fieldType === 'number' ? (

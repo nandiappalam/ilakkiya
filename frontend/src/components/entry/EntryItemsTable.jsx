@@ -1,28 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { calculateRow } from '../../utils/taxCalc';
-import { MASTER_FIELD_TYPES } from '../../utils/masterFields';
 import { validateEntryConfig } from '../../utils/validateEntryPage';
-import api, { safeArray } from '../../utils/api';
+import { api, getMasters, getNextLot } from '../../services/api.js';
+import { safeArray } from './safeArray.js';
 import { DEBUG } from '../../config/debug';
 
-const MasterSelectCell = ({ value, masterType, onChange, rowIndex, cellKey }) => {
+const MasterSelectCell = ({ value, valueId, masterType, onChange, rowIndex, cellKey }) => {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   useEffect(() => {
     if (!masterType) {
       setOptions([]);
       return;
     }
-    
+
     const fetchOptions = async () => {
       setLoading(true);
       try {
-        const table = api.MASTER_TABLES?.[masterType] || masterType;
-        if (DEBUG) console.log(`Fetching master table: ${table}`);
-        const result = await api.getMasters(table);
-        const data = safeArray(result);
-        setOptions(data || []);
+        const table = masterType.replace('_master', '');
+        if (DEBUG) console.log(`Fetching masters: ${masterType} -> table: ${table}`);
+        const result = await getMasters(table);
+        if (!result) return;
+        const data = safeArray(result.data || result);
+        setOptions(data);
       } catch (err) {
         console.error(`Error fetching ${masterType}:`, err);
         setOptions([]);
@@ -30,24 +31,28 @@ const MasterSelectCell = ({ value, masterType, onChange, rowIndex, cellKey }) =>
         setLoading(false);
       }
     };
-    
+
     fetchOptions();
   }, [masterType]);
-  
+
   const handleChange = (e) => {
-    const selectedOption = options.find(opt => opt.id === parseInt(e.target.value) || opt.id === e.target.value);
-    const displayValue = selectedOption ? (selectedOption.item_name || selectedOption.name || String(selectedOption.id)) : e.target.value;
-    onChange(rowIndex, cellKey, displayValue);
+    const selectedId = e.target.value;
+    const selectedOption = options.find(opt => String(opt.id) === selectedId);
+    const displayValue = selectedOption ? (selectedOption.item_name || selectedOption.name || String(selectedOption.id)) : selectedId;
+    console.log('🎯 MasterSelectCell CHANGE:', { cellKey, selectedId, displayValue, selectedOption, totalOptions: options.length });
+    // Pass both ID and display name to parent handler
+    onChange(rowIndex, cellKey, displayValue, selectedId);
   };
-  
-  const currentOption = options.find(opt => (opt.item_name || opt.name || String(opt.id)) === value || opt.id === value);
-  const displayValue = currentOption ? currentOption.id : '';
-  
+
+  const safeOptions = Array.isArray(options) ? options : [];
+  // Bind select value to the stored ID
+  const selectValue = valueId ? String(valueId) : '';
+
   return (
-    <select value={displayValue} onChange={handleChange} style={styles.cellInput} disabled={loading}>
-      <option value="">{isPurchaseReturnPage && masterType === 'items' ? (loading ? 'Loading...' : '-- Select Item --') : (loading ? 'Loading...' : 'Select')}</option>
-      {options.map((opt) => (
-        <option key={opt.id} value={opt.id}>
+    <select value={selectValue} onChange={handleChange} style={styles.cellInput} disabled={loading} className="table-input">
+      <option value="">{loading ? 'Loading...' : '-- Select --'}</option>
+      {safeOptions.map((opt) => (
+        <option key={opt.id} value={String(opt.id)}>
           {opt.item_name || opt.name || String(opt.id)}
         </option>
       ))}
@@ -55,13 +60,9 @@ const MasterSelectCell = ({ value, masterType, onChange, rowIndex, cellKey }) =>
   );
 };
 
-const isPurchaseReturnPage = window.location.pathname.toLowerCase().includes('purchase-return');
-
-
-
-const EntryItemsTable = ({ 
-  columns = [], 
-  data = [], 
+const EntryItemsTable = ({
+  columns = [],
+  data = [],
   onRowChange = () => {},
   onAddRow = () => {},
   onDeleteRow = () => {},
@@ -69,28 +70,26 @@ const EntryItemsTable = ({
   sectionTitle = '',
   editable = true,
   lotMode = 'select',
-  itemColumnKey = 'item_name',
   taxType = 'Exclusive',
   taxRate = 18
 }) => {
 
-
-
   const generateLot = async () => {
     try {
-      const result = await api.getNextLot();
+      const result = await getNextLot();
       return safeArray(result)[0]?.lot_no || 'LOT001';
-    } catch (err){
+    } catch (err) {
+      console.error('getNextLot failed:', err);
       return 'LOT001';
     }
   };
 
-// 🔥 AUTO FIRST ROW: Add empty row if none exists (ALL modes)
+  // Auto first row
   useEffect(() => {
     if (data.length === 0) {
-      console.log('🔧 Adding first empty row for ready UX');
       const newRow = {
         item_name: '',
+        item_id: '',
         lot_no: '',
         weight: '',
         qty: '',
@@ -101,15 +100,13 @@ const EntryItemsTable = ({
         amount: ''
       };
       onAddRow(newRow);
-      return;
     }
   }, []);
 
-  // 🔥 AUTO LOT LOGIC (only for auto mode)
+  // Auto lot logic
   useEffect(() => {
     if (lotMode === 'auto' && data.length > 0 && !data[0].lot_no) {
       generateLot().then(lot => {
-        console.log('🔧 AUTO first row lot:', lot);
         onRowChange(0, 'lot_no', lot);
       });
     }
@@ -137,17 +134,17 @@ const EntryItemsTable = ({
     let newLot = '';
     if (isAutoLot) {
       try {
-        const lotResult = await api.getNextLot();
-        newLot = safeArray(lotResult)[0]?.lot_no || `LOTERR`;
+        const lotResult = await getNextLot();
+        newLot = safeArray(lotResult)[0]?.lot_no || 'LOTERR';
       } catch (err) {
         console.error('Auto lot generation failed:', err);
         newLot = 'LOTERR';
       }
     }
 
-    // Create complete new row with lot pre-filled
     const newRow = {
       item_name: '',
+      item_id: '',
       lot_no: newLot,
       qty: '',
       weight: '',
@@ -158,44 +155,54 @@ const EntryItemsTable = ({
       tax_amount: 0
     };
 
-    // Call parent's onAddRow with complete row
     onAddRow(newRow);
   };
 
-  const handleCellChange = useCallback((rowIndex, key, value) => {
+  const handleCellChange = useCallback((rowIndex, key, value, valueId = null) => {
     if (key === 'item_name') {
-      onRowChange(rowIndex, key, value);
+      // Update display name and ID
+      onRowChange(rowIndex, 'item_name', value);
+      if (valueId !== null) {
+        onRowChange(rowIndex, 'item_name_id', valueId);
+      }
+      // Reset lot
       onRowChange(rowIndex, 'lot_no', '');
-      
-      // 🔥 CRITICAL: Load available lots for dropdown
+      onRowChange(rowIndex, 'available_lots', []);
+
+      // Load available lots for this item
       const loadLots = async () => {
+        if (!value) return;
         try {
-          const lots = await api.getAvailableLots(value);
-          onRowChange(rowIndex, 'available_lots', lots || []);
-          console.log("🔥 LOADED LOTS FOR", value, ":", lots);
+          const lots = await api(`/stock/available/${encodeURIComponent(value)}`);
+          const availableLots = safeArray(lots.data || lots).filter(l => (l.balance_qty || l.remaining_quantity || 0) > 0);
+          onRowChange(rowIndex, 'available_lots', availableLots);
+          if (DEBUG) console.log(`Loaded ${availableLots.length} lots for "${value}"`);
         } catch (err) {
-          console.error("LOT LOAD ERROR:", err);
+          console.error(`LOT LOAD ERROR for ${value}:`, err);
           onRowChange(rowIndex, 'available_lots', []);
         }
       };
       loadLots();
-      
       return;
     }
-    
+
+    // Block lot_no edit in auto mode
     if (lotMode === 'auto' && key === 'lot_no') return;
 
-    if (key === 'qty' && data[rowIndex]?.availableQty !== undefined) {
+    // Qty validation against lot balance
+    if (key === 'qty' && data[rowIndex]?.lot_no && data[rowIndex]?.available_lots) {
       const qty = parseFloat(value) || 0;
-      if (qty > data[rowIndex].availableQty) {
-        alert(`Quantity ${qty} exceeds available stock ${data[rowIndex].availableQty}`);
+      const currentLot = data[rowIndex].available_lots.find(l => l.lot_no === data[rowIndex].lot_no);
+      const balance = currentLot ? (currentLot.balance_qty || currentLot.remaining_quantity || 0) : Infinity;
+      if (qty > balance) {
+        alert(`Qty ${qty} > Lot balance ${balance}`);
         return;
       }
     }
 
     onRowChange(rowIndex, key, value);
 
-    // Full recalc on qty/rate/disc/tax_rate change
+    // Recalculate amounts
     if (['qty', 'rate', 'disc', 'tax_rate'].includes(key) && data[rowIndex]) {
       const rowData = {
         qty: parseFloat(data[rowIndex].qty || (key === 'qty' ? value : '')) || 0,
@@ -226,38 +233,48 @@ const EntryItemsTable = ({
         <tbody>
           {data.map((row, rowIndex) => (
             <tr key={rowIndex}>
-{cleanedColumns.map((col) => {
-                const colKey = col.key.toLowerCase();
-                
-                // 🔥 STRICT AUTO LOT FIX: Force readonly input for lot_no when lotMode=auto
-                // 👉 IGNORE col.type completely - NO dropdown ever in auto mode
+              {cleanedColumns.map((col) => {
                 if (col.key === 'lot_no') {
-
-
-                  return (
-                    <td key={col.key}>
-                      <select
-                        value={row.lot_no || ''}
-                        onChange={(e) => onRowChange(rowIndex, 'lot_no', e.target.value)}
-                        disabled={!row.item_name}
-                        className="form-control"
-                      >
-                        {!row.item_name ? (
-                          <option value="">-- Select Item First --</option>
-                        ) : (
-                          <>
-                            <option value="">-- Select Lot --</option>
-                            {(row.available_lots || []).map((lot) => (
-                              <option key={lot.lot_no} value={lot.lot_no}>
-                                {lot.lot_no} {`(${lot.remaining_quantity || ''})`}
-                              </option>
-                            ))}
-
-                          </>
-                        )}
-                      </select>
-                    </td>
-                  );
+                  if (lotMode === 'auto') {
+                    return (
+                      <td key={col.key}>
+                        <input
+                          type="text"
+                          value={row.lot_no || 'Auto...'}
+                          readOnly
+                          className="table-input"
+                          style={{ backgroundColor: '#f0f8ff', fontWeight: 'bold' }}
+                          title="Auto-generated lot"
+                        />
+                      </td>
+                    );
+                  } else {
+                    return (
+                      <td key={col.key}>
+                        <select
+                          value={row.lot_no || ''}
+                          onChange={(e) => onRowChange(rowIndex, 'lot_no', e.target.value)}
+                          disabled={!row.item_name || !(row.available_lots?.length > 0)}
+                          className="table-input"
+                        >
+                          {!row.item_name ? (
+                            <option value="">Select Item First</option>
+                          ) : !row.available_lots?.length ? (
+                            <option value="">No lots available</option>
+                          ) : (
+                            <>
+                              <option value="">Select Lot</option>
+                              {row.available_lots.map((lot) => (
+                                <option key={lot.lot_no} value={lot.lot_no}>
+                                  {lot.lot_no} ({lot.balance_qty || lot.remaining_quantity || 0} left)
+                                </option>
+                              ))}
+                            </>
+                          )}
+                        </select>
+                      </td>
+                    );
+                  }
                 }
 
                 return (
@@ -266,8 +283,9 @@ const EntryItemsTable = ({
                       col.type === 'masterSelect' ? (
                         <MasterSelectCell
                           value={row[col.key]}
+                          valueId={row[`${col.key}_id`]}
                           masterType={col.masterType}
-                          onChange={onRowChange}
+                          onChange={handleCellChange}
                           rowIndex={rowIndex}
                           cellKey={col.key}
                         />

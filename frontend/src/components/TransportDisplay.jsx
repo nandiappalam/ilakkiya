@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import api from '../utils/api.js'
+import { getMasters, deleteMaster } from '../services/masterservice'
 import MasterTableLayout from './master/MasterTableLayout'
 
 const TransportDisplay = () => {
@@ -16,7 +16,7 @@ const TransportDisplay = () => {
 
   const loadTransports = async () => {
     try {
-      const result = await api.getTransports()
+const result = await getMasters('transports')
       if (result.success) {
         setTransports(result.data)
       } else {
@@ -33,7 +33,7 @@ const TransportDisplay = () => {
     if (!window.confirm('Are you sure you want to delete this transport?')) return
 
     try {
-      const result = await api.deleteMaster('transport_master', transport.id)
+const result = await deleteMaster('transport_master', transport.id)
       if (result.success) {
         alert('Transport deleted successfully')
         loadTransports()

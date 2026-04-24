@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getWeights, deleteWeight } from '../utils/api';
+import { getMasters, deleteMaster } from '../services/masterservice';
 import MasterTableLayout from './master/MasterTableLayout';
 
 const WeightDisplay = () => {
@@ -12,7 +12,7 @@ const WeightDisplay = () => {
 
   const fetchWeights = async () => {
     try {
-      const result = await getWeights();
+const result = await getMasters('weights');
       if (result.success) {
         setWeights(result.data);
       } else {
@@ -29,7 +29,7 @@ const WeightDisplay = () => {
     if (!window.confirm('Are you sure you want to delete this weight?')) return;
 
     try {
-      const result = await deleteWeight(weight.id);
+const result = await deleteMaster('weight_master', weight.id);
       if (result.success) {
         alert('Deleted successfully');
         fetchWeights();

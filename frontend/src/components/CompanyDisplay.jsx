@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MasterTableLayout from './master/MasterTableLayout'
-import api from '../utils/api.js'
+import api from '../services/api.js';
 
 
 const CompanyDisplay = () => {
@@ -19,8 +19,8 @@ const CompanyDisplay = () => {
   const loadCompanies = async () => {
     setLoading(true)
     try {
-      const result = await api.getMasters("companies")
-      setCompanies(result.data || [])
+      const result = await api.get('/companies')
+      setCompanies(result || [])
     } catch (error) {
       console.error('Error loading companies:', error)
       setCompanies([])
@@ -33,7 +33,7 @@ const CompanyDisplay = () => {
   const handleDelete = async (company) => {
     if (!window.confirm('Are you sure you want to delete this company?')) return
     try {
-      await api.deleteMaster("companies", company.id)
+      await api.delete(`/companies/${company.id}`)
       loadCompanies()
     } catch (error) {
       console.error('Error deleting company:', error)
@@ -47,7 +47,7 @@ const CompanyDisplay = () => {
   }
 
   const handleUpdate = (company) => {
-    navigate(`/company-update?id=${company.id}`)
+    navigate(`/company-create/${company.id}`)
   }
 
   const handlePrint = (company) => {
@@ -96,7 +96,7 @@ const CompanyDisplay = () => {
 
   return (
     <MasterTableLayout
-      title="COMPANY MASTER"
+      title="Companies"
       columns={columns}
       data={companies}
       onOpen={handleOpen}

@@ -284,6 +284,8 @@ const Navigation = () => {
     'Sales Return',
     'Stock Adjust',
     'Weight Conversion',
+    'Voucher',
+    'Vehicle Movement',  // ✅ NEW - LAST ITEM
   ];
 
   const masterModules = [

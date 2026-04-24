@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { getPTrans, updatePTrans } from '../utils/api'
-import { safeArray } from '../utils/api'
+import api from '../utils/api'
+// safeArray not needed anymore
 
 // Import modular master components
 import { MasterFormLayout, MasterFieldGroup, MasterActions } from './master'
@@ -31,7 +31,7 @@ const PTransUpdate = () => {
 
   const loadPTransData = async (id) => {
     try {
-      const result = await getPTrans()
+      const result = await api.getMasters('ptrans')
       
       // Use safeArray utility for safe data handling
       const ptransList = safeArray(result);
@@ -68,7 +68,7 @@ const PTransUpdate = () => {
     }
 
     try {
-      const result = await updatePTrans(parseInt(ptransId), formData)
+      const result = await api.updateMaster('ptrans_master', parseInt(ptransId), formData)
 
       if (result.success) {
         setSuccess('PTrans updated successfully')

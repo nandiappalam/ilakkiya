@@ -32,7 +32,7 @@ const handleDelete = async (id) => {
 // Handle print
 const handlePrint = (row) => {
   const win = window.open('', '_blank');
-  const html = `<html><head><title>Advance - ${row.s_no || ''}</title><style>body{font-family:Arial;padding:20px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:8px}</style></head><body><h2>Advance</h2><table><tr><th>Adv No</th><td>${row.s_no||''}</td></tr><tr><th>Date</th><td>${row.date||''}</td></tr><tr><th>Papad Company</th><td>${row.papad_company||''}</td></tr><tr><th>Amount</th><td>${row.amount||''}</td></tr></table></body></html>`;
+  const html = `<html><head><title>Advance - ${row.s_no || ''}</title><style>body{font-family:Arial;padding:20px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:8px}</style></head><body><h2>Advance</h2><table><tr><th>Adv No</th><td>${row.s_no||''}</td></tr><tr><th>Date</th><td>${row.date||''}</td></tr><tr><th>Papad Company</th><td>${row.papad_company_name || row.papad_company||''}</td></tr><tr><th>Amount</th><td>${row.amount||''}</td></tr></table></body></html>`;
   if (win) { win.document.write(html); win.document.close(); win.focus(); win.print(); }
 };
 

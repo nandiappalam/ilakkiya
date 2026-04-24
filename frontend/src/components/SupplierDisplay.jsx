@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import MasterTableLayout from './master/MasterTableLayout'
-import api from '../utils/api.js'
+import { getMasters, deleteMaster } from '../services/masterservice'
 
 
 const SupplierDisplay = () => {
@@ -17,7 +17,7 @@ const SupplierDisplay = () => {
 
   const loadSuppliers = async () => {
     try {
-      const result = await api.getMasters("suppliers")
+const result = await getMasters("suppliers")
       setSuppliers(result.data || [])
     } catch (error) {
       console.error('Error loading suppliers:', error)
@@ -31,7 +31,7 @@ const SupplierDisplay = () => {
   const handleDelete = async (supplier) => {
     if (!window.confirm('Are you sure you want to delete this supplier?')) return
     try {
-      await api.deleteMaster("supplier_master", supplier.id)
+await deleteMaster("supplier_master", supplier.id)
       loadSuppliers()
     } catch (error) {
       console.error('Error deleting supplier:', error)

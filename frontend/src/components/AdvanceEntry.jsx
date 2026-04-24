@@ -63,7 +63,7 @@ const AdvanceEntry = () => {
 
   const handlePrint = (row) => {
     const w = window.open('', '', 'width=800,height=600')
-    w.document.write(`<html><body><h3>Advance</h3><p>Papad Company: ${row.company}</p><p>Amount: ${row.amount}</p></body></html>`)
+    w.document.write(`<html><body><h3>Advance</h3><p>Papad Company: ${row.papad_company_name || row.company || row.papad_company}</p><p>Amount: ${row.amount}</p></body></html>`)
     w.print()
   }
 
@@ -96,7 +96,7 @@ const AdvanceEntry = () => {
             {rows.map((row, idx) => (
               <tr key={idx}>
                 <td>{row.date}</td>
-                <td>{row.company}</td>
+<td>{row.papad_company_name || row.company || row.papad_company}</td>
                 <td>{row.amount}</td>
                 <td>{row.pay_mode}</td>
                 <td className="actions-cell">

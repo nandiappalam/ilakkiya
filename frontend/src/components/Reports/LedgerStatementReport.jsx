@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getSuppliers, getCustomers, getPapadCompanies, getLedgerStatementReport } from '../../utils/api'
+import api from '../../utils/api.js'
 import './ReportPage.css'
 
 /**
@@ -28,15 +28,15 @@ const LedgerStatementReport = () => {
     const fetchLedgers = async () => {
       try {
         // Fetch suppliers
-        const suppliersRes = await getSuppliers()
+        const suppliersRes = await api.getMasters('suppliers')
         const suppliers = (suppliersRes.success && Array.isArray(suppliersRes.data)) ? suppliersRes.data : []
         
         // Fetch customers
-        const customersRes = await getCustomers()
+        const customersRes = await api.getMasters('customers')
         const customers = (customersRes.success && Array.isArray(customersRes.data)) ? customersRes.data : []
         
         // Fetch papad companies
-        const papadRes = await getPapadCompanies()
+        const papadRes = await api.getMasters('papad_companies')
         const papads = (papadRes.success && Array.isArray(papadRes.data)) ? papadRes.data : []
         
         // Combine all ledgers
@@ -66,7 +66,7 @@ const LedgerStatementReport = () => {
       if (fromDate) params.from_date = fromDate
       if (toDate) params.to_date = toDate
       
-      const result = await getLedgerStatementReport({ ledgerName: selectedLedger, ...params })
+      const result = await api.get('/reports/ledger/' + encodeURIComponent(selectedLedger), { params })
       
       if (result.success && result.data && typeof result.data === 'object') {
         setReportData(result.data)

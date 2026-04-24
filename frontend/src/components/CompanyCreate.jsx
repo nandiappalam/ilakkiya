@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { createCompany, getCompanies, updateCompany } from '../utils/api';
+import api from '../services/api.js';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -52,22 +52,14 @@ const CompanyCreate = () => {
   const fetchCompany = async () => {
     try {
       setLoading(true);
-const result = await getCompany(parseInt(id));
-      
-      let data = null;
-      if (result && result.success && result.data && result.data.length > 0) {
-        data = result.data[0];
-      } else if (Array.isArray(result)) {
-        data = result[0];
-      }
-      
-      if (data) {
+      const result = await api.get(`/companies/${id}`);
+      if (result) {
         setFormData({
-          name: data.name || '',
-          address: data.address || '',
-          gst_number: data.gst_number || '',
-          contact: data.contact || '',
-          email: data.email || ''
+          name: result.name || '',
+          address: result.address || '',
+          gst_number: result.gst_number || '',
+          contact: result.contact || '',
+          email: result.email || ''
         });
       } else {
         setError('Failed to load company data');
@@ -82,7 +74,14 @@ const result = await getCompany(parseInt(id));
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        name === "gst_number"
+          ? value.toUpperCase().replace(/[^A-Z0-9]/g, "")
+          : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -98,27 +97,27 @@ const result = await getCompany(parseInt(id));
     try {
       setSaving(true);
       
-      let result;
-      const companyName = formData.name;
-      const address = formData.address;
-      const gstNumber = formData.gst_number;
-      const contact = formData.contact;
-      const email = formData.email;
+      const payload = {
+        name: formData.name,
+        address: formData.address,
+        gst_number: formData.gst_number,
+        contact: formData.contact,
+        email: formData.email
+      };
+      
+      console.log('Sending payload:', JSON.stringify(payload, null, 2));
       
       if (isEditMode) {
-result = await updateCompany(parseInt(id), companyName, address, gstNumber, contact, email);
+        await api.put(`/companies/${id}`, payload);
+        setSuccess('Company updated successfully!');
       } else {
-result = await createCompany(companyName, address, gstNumber, contact, email);
+        await api.post('/companies', payload);
+        setSuccess('Company created successfully!');
       }
 
-      if (result && result.success) {
-        setSuccess(isEditMode ? 'Company updated successfully!' : 'Company created successfully!');
-        setTimeout(() => {
-          navigate('/company-select');
-        }, 1500);
-      } else {
-        setError(result?.message || `Failed to ${isEditMode ? 'update' : 'create'} company`);
-      }
+      setTimeout(() => {
+        navigate('/company-display');
+      }, 1500);
     } catch (error) {
       console.error('Error saving company:', error);
       setError('Error connecting to server');

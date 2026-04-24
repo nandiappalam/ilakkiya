@@ -5,8 +5,14 @@ const { createAdvanceLedgerEntries, deleteLedgerEntries } = require('../utils/le
 
 // GET all advances
 router.get('/', async (req, res) => {
+  console.log("🔥 ADVANCE API HIT");
   try {
-    const result = await db.query('SELECT * FROM advances ORDER BY id DESC')
+    const result = await db.query(`
+      SELECT a.*, COALESCE(pcm.name, a.papad_company) AS papad_company_name 
+      FROM advances a 
+      LEFT JOIN papad_company_master pcm ON (pcm.id = CAST(a.papad_company AS INTEGER) OR pcm.name = a.papad_company)
+      ORDER BY a.id DESC
+    `)
     res.json(result.rows)
   } catch (error) {
     console.error('Error fetching advances:', error)
@@ -17,7 +23,12 @@ router.get('/', async (req, res) => {
 // GET single advance by ID
 router.get('/:id', async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM advances WHERE id = ?', [req.params.id])
+    const result = await db.query(`
+      SELECT a.*, COALESCE(pcm.name, a.papad_company) AS papad_company_name 
+      FROM advances a 
+      LEFT JOIN papad_company_master pcm ON (pcm.id = CAST(a.papad_company AS INTEGER) OR pcm.name = a.papad_company)
+      WHERE a.id = ?
+    `, [req.params.id])
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Advance not found' })
@@ -141,3 +152,4 @@ router.delete('/:id', async (req, res) => {
 })
 
 module.exports = router
+

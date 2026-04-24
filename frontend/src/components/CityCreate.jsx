@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import api from '../utils/api.js'
-import { MASTER_CONFIG } from '../utils/masterFields.js'
+import { MASTER_CONFIG } from '../utils/masterConfig.js'
+import { safeArray } from '../utils/safeArray.js'
 import { FormSection } from './master'
 import MasterFormLayout from './master/MasterFormLayout'
 import SmartField from './master/SmartField'
 import './master/master.css'
 
 const CityCreate = () => {
-  const config = MASTER_CONFIG.city;
+  const config = MASTER_CONFIG.city || {};
+  const sections = safeArray(config.sections);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -27,8 +29,8 @@ const CityCreate = () => {
 
     // Init form
     const initialData = {};
-    config.sections.forEach(section => {
-      section.fields.forEach(field => {
+    sections.forEach(section => {
+      safeArray(section.fields).forEach(field => {
         initialData[field.name] = field.defaultValue || '';
       });
     });
@@ -53,8 +55,8 @@ const CityCreate = () => {
         setMessageType('success');
         // Reset form
         const resetData = {};
-        config.sections.forEach(section => {
-          section.fields.forEach(field => {
+        sections.forEach(section => {
+          safeArray(section.fields).forEach(field => {
             resetData[field.name] = field.defaultValue || '';
           });
         });
@@ -75,8 +77,8 @@ const CityCreate = () => {
 
   const handleCancel = () => {
     const resetData = {};
-    config.sections.forEach(section => {
-      section.fields.forEach(field => {
+    sections.forEach(section => {
+      safeArray(section.fields).forEach(field => {
         resetData[field.name] = field.defaultValue || '';
       });
     });
@@ -88,9 +90,9 @@ const CityCreate = () => {
     <MasterFormLayout title="City Creation" onSave={handleSubmit} onCancel={handleCancel}>
       {message && <div className={`message ${messageType}`}>{message}</div>}
 
-      {config.sections.map((section, secIndex) => (
+      {sections.map((section, secIndex) => (
         <FormSection key={secIndex} title={section.title}>
-          {section.fields.map((field, fieldIndex) => (
+          {safeArray(section.fields).map((field, fieldIndex) => (
             <SmartField 
               key={fieldIndex} 
               field={field} 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { getAreas, updateArea } from '../utils/api'
-import { safeArray } from '../utils/api'
+import api from '../utils/api'
+// safeArray not needed anymore
 
 // Import modular master components
 import { MasterFormLayout, MasterFieldGroup, MasterActions } from './master'
@@ -31,10 +31,10 @@ const AreaUpdate = () => {
 
   const loadAreaData = async (id) => {
     try {
-      const result = await getAreas()
+      const result = await api.getAreas()
       
       // Use safeArray utility for safe data handling
-      const areas = safeArray(result);
+      const areas = Array.isArray(result) ? result : [];
       
       const area = areas.find(a => a.id == id)
       if (area) {
@@ -68,7 +68,7 @@ const AreaUpdate = () => {
     }
 
     try {
-      const result = await updateArea(parseInt(areaId), formData)
+      const result = await api.updateMaster('area_master', parseInt(areaId), formData)
 
       if (result.success) {
         setSuccess('Area updated successfully')

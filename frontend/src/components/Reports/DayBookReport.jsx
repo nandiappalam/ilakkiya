@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { getDayBookReport } from '../../utils/api'
+import api from '../../services/api.js'
+export const safeArray = (arr) => Array.isArray(arr) ? arr : [];
 import './ReportPage.css'
 
 /**
@@ -33,7 +34,7 @@ const DayBookReport = () => {
       if (fromDate) params.from_date = fromDate
       if (toDate) params.to_date = toDate
       
-      const result = await getDayBookReport(params)
+      const result = await api.get('/reports/daybook', { params })
       
       // Handle response data
       let responseData = []

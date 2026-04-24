@@ -1,80 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import api from '../../utils/api.js';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getMasters, deleteMaster } from '../../services/masterservice';
 import MasterTableLayout from './MasterTableLayout';
 
 const GodownDisplay = () => {
   const [godowns, setGodowns] = useState([]);
   const [loading, setLoading] = useState(true);
+  const hasFetched = useRef(false);
+  const navigate = useNavigate();
 
-  const fetchGodowns = async () => {
+  useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+    loadGodowns();
+  }, []);
+
+  const loadGodowns = async () => {
     try {
-      const result = await api.getMasters("godowns");
+      const result = await getMasters('godowns');
       setGodowns(result.data || []);
-    } catch (err) {
-      console.error('Fetch error:', err);
+    } catch (error) {
+      console.error('Error loading godowns:', error);
+      setGodowns([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchGodowns();
-  }, []);
-
-  const deleteGodown = async (id) => {
-    if (confirm('Delete this godown?')) {
-      try {
-        await api.deleteMaster('godown_master', id);
-        fetchGodowns();
-      } catch (err) {
-        alert('Error deleting godown');
-      }
+  const handleDelete = async (godown) => {
+    if (!confirm('Are you sure?')) return;
+    try {
+      await deleteMaster('godown_master', godown.id);
+      loadGodowns();
+    } catch (error) {
+      alert('Delete error: ' + error.message);
     }
+  };
+
+  const handleUpdate = (godown) => {
+    navigate(`/master/godown-update/${godown.id}`);
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const columns = [
     { key: 'sno', title: 'S.No', width: '60px', render: (_,__,index) => index+1 },
-    { key: 'godown_name', title: 'Name' },
-    { key: 'contact_person', title: 'Contact person' },
-    { key: 'mobile', title: 'Mobile' },
-    { key: 'area', title: 'Area' },
-    { key: 'gst_no', title: 'GST NO' },
+    { key: 'godown_name', title: 'Godown Name' },
+    { key: 'print_name', title: 'Print Name' },
+    { key: 'status', title: 'Status', width: '80px' },
   ];
 
   return (
-    <MasterTableLayout title="Godown Master - Display" onRefresh={fetchGodowns} loading={loading}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ background: '#f5f5f5' }}>
-            {columns.map(col => (
-              <th key={col.key} style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 'bold' }}>
-                {col.title}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {godowns.map((godown, index) => (
-            <tr key={godown.id || index}>
-              {columns.map(col => (
-                <td key={col.key} style={{ padding: '12px', border: '1px solid #ddd' }}>
-                  {godown[col.key] || '-'}
-                </td>
-              ))}
-              <td style={{ padding: '12px', border: '1px solid #ddd' }}>
-                <button onClick={() => deleteGodown(godown.id)} style={{ color: 'red' }}>
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {godowns.length === 0 && !loading && (
-        <p style={{ textAlign: 'center', color: '#666', marginTop: '20px' }}>No godowns found. Create one first.</p>
-      )}
-    </MasterTableLayout>
+    <MasterTableLayout
+      title="GODOWN MASTER"
+      columns={columns}
+      data={godowns}
+      onEdit={handleUpdate}
+      onDelete={handleDelete}
+      onPrint={handlePrint}
+      showActions={true}
+    />
   );
 };
 
 export default GodownDisplay;
+

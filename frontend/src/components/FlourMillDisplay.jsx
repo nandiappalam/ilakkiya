@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../utils/api.js';
+import { getMasters, deleteMaster } from '../services/masterservice';
 import MasterTableLayout from './master/MasterTableLayout';
 
 const FlourMillDisplay = () => {
@@ -16,7 +16,7 @@ const FlourMillDisplay = () => {
 
   const loadFlourMills = async () => {
     try {
-      const result = await api.getMasters("flour_mill_master");
+      const result = await getMasters("flour_mill_master");
       setFlourMills(result.data || []);
     } catch (error) {
       console.error('Error loading flour mills:', error);
@@ -26,12 +26,11 @@ const FlourMillDisplay = () => {
     }
   };
 
-
   const handleDelete = async (flourMill) => {
     if (!confirm('Are you sure you want to delete this flour mill?')) return;
 
     try {
-      await api.deleteMaster("flour_mill_master", flourMill.id);
+      await deleteMaster("flour_mill_master", flourMill.id);
       alert('Flour mill deleted successfully');
       loadFlourMills();
     } catch (error) {
@@ -103,3 +102,4 @@ const FlourMillDisplay = () => {
 };
 
 export default FlourMillDisplay;
+

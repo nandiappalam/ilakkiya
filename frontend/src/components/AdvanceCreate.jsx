@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import './AdvanceCreate.css'
-import api from "../config/api";
+import api from "../services/api.js";
 // Import modular entry components
 import { EntryTopFrame, EntryActions } from './entry'
 
@@ -49,7 +49,7 @@ const AdvanceCreate = () => {
       }
       
       // Use Tauri API instead of fetch
-      const result = await api.createAdvance(postData);
+      const result = await api('/advances', 'POST', postData);
       
       if (result && result.success) {
         setMessage('Advance saved successfully')

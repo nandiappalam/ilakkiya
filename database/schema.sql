@@ -604,6 +604,30 @@ CREATE INDEX IF NOT EXISTS idx_ledger_entries_date ON ledger_entries(date);
 CREATE INDEX IF NOT EXISTS idx_ledger_entries_ledger_id ON ledger_entries(ledger_id);
 CREATE INDEX IF NOT EXISTS idx_ledger_entries_voucher ON ledger_entries(voucher_type, voucher_no);
 
+-- Vehicle Movements Table (NEW)
+CREATE TABLE IF NOT EXISTS vehicle_movements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  reference_type TEXT NOT NULL,  -- PURCHASE|SALES|PURCHASE_RETURN|SALES_RETURN
+  reference_id INTEGER NOT NULL,
+  movement_type TEXT NOT NULL,   -- INBOUND|OUTBOUND
+  operation_type TEXT NOT NULL,  -- LOAD|UNLOAD
+  vehicle_no TEXT NOT NULL,
+  driver_name TEXT,
+  transporter_id INTEGER,
+  gate_in_time DATETIME,
+  gate_out_time DATETIME,
+  gross_weight REAL DEFAULT 0,
+  tare_weight REAL DEFAULT 0,
+  net_weight REAL DEFAULT 0,
+  status TEXT DEFAULT 'IN',      -- IN|LOADED|UNLOADED|OUT
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (transporter_id) REFERENCES transport_master(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_vehicle_ref ON vehicle_movements(reference_type, reference_id);
+CREATE INDEX IF NOT EXISTS idx_vehicle_status ON vehicle_movements(status);
+CREATE INDEX IF NOT EXISTS idx_vehicle_vehicle_no ON vehicle_movements(vehicle_no);
+
 -- Stock Lots table for GLOBAL lot tracking (LOT001, LOT002...)
 CREATE TABLE IF NOT EXISTS stock_lots (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

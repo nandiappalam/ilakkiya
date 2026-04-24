@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import './PackingCreate.css';
 
 // Import modular entry components
@@ -6,21 +6,24 @@ import { EntryTopFrame, EntryItemsTable, EntryActions, EntrySection } from './en
 
 const PackingCreate = () => {
   const [formData, setFormData] = useState({
-    sNo: '',
-    date: '',
+    s_no: '',
+    date: new Date().toISOString().split('T')[0],
     remarks: ''
   });
 
+  // Packing From: item dropdown → available lots
   const [packingFrom, setPackingFrom] = useState([
-    { itemName: '', lotNo: '', kg: '' }
+    { item_name: '', item_id: '', lot_no: '', kg: '' }
   ]);
 
+  // Packing Material: item dropdown → available lots
   const [packingMaterial, setPackingMaterial] = useState([
-    { itemName: '', lotNo: '', qty: '' }
+    { item_name: '', item_id: '', lot_no: '', qty: '' }
   ]);
 
+  // Packing To: item first, lot auto-generated
   const [packingTo, setPackingTo] = useState([
-    { lotNo: '', itemName: '', box: '' }
+    { item_name: '', item_id: '', lot_no: '', box: '', qty: '' }
   ]);
 
   const [loading, setLoading] = useState(false);
@@ -34,23 +37,30 @@ const PackingCreate = () => {
     });
   };
 
-  const handlePackingFromChange = (index, field, value) => {
-    const updated = [...packingFrom];
-    updated[index][field] = value;
-    setPackingFrom(updated);
-  };
+  // ✅ Functional state updates to prevent race conditions
+  const handlePackingFromChange = useCallback((index, field, value) => {
+    setPackingFrom(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  }, []);
 
-  const handlePackingMaterialChange = (index, field, value) => {
-    const updated = [...packingMaterial];
-    updated[index][field] = value;
-    setPackingMaterial(updated);
-  };
+  const handlePackingMaterialChange = useCallback((index, field, value) => {
+    setPackingMaterial(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  }, []);
 
-  const handlePackingToChange = (index, field, value) => {
-    const updated = [...packingTo];
-    updated[index][field] = value;
-    setPackingTo(updated);
-  };
+  const handlePackingToChange = useCallback((index, field, value) => {
+    setPackingTo(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,7 +68,15 @@ const PackingCreate = () => {
     setMessage('');
 
     try {
-      // API call would go here
+      // TODO: Replace with actual API call
+      // const payload = {
+      //   header: formData,
+      //   packing_from: packingFrom,
+      //   packing_material: packingMaterial,
+      //   packing_to: packingTo
+      // };
+      // const result = await api('/packing', 'POST', payload);
+
       setMessage('Packing saved successfully!');
       setMessageType('success');
       setTimeout(() => setMessage(''), 3000);
@@ -71,27 +89,31 @@ const PackingCreate = () => {
   };
 
   const topFrameFields = [
-    { name: 'sNo', label: 'S.No', value: formData.sNo },
-    { name: 'date', label: 'Date', type: 'date', value: formData.date },
-    { name: 'remarks', label: 'Remarks', value: formData.remarks },
+    { name: 's_no', label: 'S.No', type: 'text' },
+    { name: 'date', label: 'Date', type: 'date' },
+    { name: 'remarks', label: 'Remarks', type: 'text' },
   ];
 
+  // ✅ Packing From columns: item_name dropdown → lot select
   const fromColumns = [
-    { key: 'itemName', title: 'Item Name' },
-    { key: 'lotNo', title: 'Lot No' },
-    { key: 'kg', title: 'Kg' },
+    { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'items' },
+    { key: 'lot_no', title: 'Lot No' },
+    { key: 'kg', title: 'Kg', type: 'number' },
   ];
 
+  // ✅ Packing Material columns: item_name dropdown → lot select
   const materialColumns = [
-    { key: 'itemName', title: 'Item Name' },
-    { key: 'lotNo', title: 'Lot No' },
-    { key: 'qty', title: 'Qty' },
+    { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'items' },
+    { key: 'lot_no', title: 'Lot No' },
+    { key: 'qty', title: 'Qty', type: 'number' },
   ];
 
+  // ✅ Packing To columns: item_name FIRST, lot_no auto-generated
   const toColumns = [
-    { key: 'lotNo', title: 'Lot No' },
-    { key: 'itemName', title: 'Item Name' },
-    { key: 'box', title: 'Box' },
+    { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'items' },
+    { key: 'lot_no', title: 'Lot No' },
+    { key: 'box', title: 'Box', type: 'number' },
+    { key: 'qty', title: 'Qty', type: 'number' },
   ];
 
   const handleFromRowChange = (rowIndex, key, value) => {
@@ -118,46 +140,53 @@ const PackingCreate = () => {
         onChange={handleChange}
       />
 
+      {/* Packing From: Item dropdown + Available lots */}
       <EntrySection title="Packing From">
         <EntryItemsTable 
           columns={fromColumns}
           data={packingFrom}
           onRowChange={handleFromRowChange}
-          onAddRow={() => setPackingFrom([...packingFrom, { itemName: '', lotNo: '', kg: '' }])}
-          onDeleteRow={(index) => setPackingFrom(packingFrom.filter((_, i) => i !== index))}
+          onAddRow={() => setPackingFrom(prev => [...prev, { item_name: '', item_id: '', lot_no: '', kg: '' }])}
+          onDeleteRow={(index) => setPackingFrom(prev => prev.filter((_, i) => i !== index))}
           showActions={true}
+          lotMode="select"
         />
       </EntrySection>
 
+      {/* Packing Material: Item dropdown + Available lots */}
       <EntrySection title="Packing Material">
         <EntryItemsTable 
           columns={materialColumns}
           data={packingMaterial}
           onRowChange={handleMaterialRowChange}
-          onAddRow={() => setPackingMaterial([...packingMaterial, { itemName: '', lotNo: '', qty: '' }])}
-          onDeleteRow={(index) => setPackingMaterial(packingMaterial.filter((_, i) => i !== index))}
+          onAddRow={() => setPackingMaterial(prev => [...prev, { item_name: '', item_id: '', lot_no: '', qty: '' }])}
+          onDeleteRow={(index) => setPackingMaterial(prev => prev.filter((_, i) => i !== index))}
           showActions={true}
+          lotMode="select"
         />
       </EntrySection>
 
+      {/* Packing To: Item first, Lot auto-generated */}
       <EntrySection title="Packing To">
         <EntryItemsTable 
           columns={toColumns}
           data={packingTo}
           onRowChange={handleToRowChange}
-          onAddRow={() => setPackingTo([...packingTo, { lotNo: '', itemName: '', box: '' }])}
-          onDeleteRow={(index) => setPackingTo(packingTo.filter((_, i) => i !== index))}
+          onAddRow={() => setPackingTo(prev => [...prev, { item_name: '', item_id: '', lot_no: '', box: '', qty: '' }])}
+          onDeleteRow={(index) => setPackingTo(prev => prev.filter((_, i) => i !== index))}
           showActions={true}
+          lotMode="auto"
         />
       </EntrySection>
 
       <EntryActions 
         onSave={handleSubmit}
         saving={loading}
-        saveText="Save"
+        saveText="Save Packing"
       />
     </div>
   );
 };
 
 export default PackingCreate;
+

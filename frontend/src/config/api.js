@@ -1,5 +1,6 @@
-// API Configuration
-// Hybrid: Works in BOTH Web (Node backend) and Desktop (Tauri + Rust)
+// CONFLICTING API CONFIG BACKED UP TO api.js.conflicted.backup
+// DEPRECATED - Use ../services/api.js instead
+// This file no longer used to avoid duplicates
 
 //import { invoke } from "@tauri-apps/api/core";
 // Detect Tauri
@@ -9,9 +10,11 @@
   typeof window !== "undefined" &&
   window.__TAURI__ !== undefined;*/
 
-// Base URL for web mode only
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+// REMOVED: Duplicate const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
+// REMOVED: Duplicate const isTauri = window.__TAURI__ !== undefined
+
+// REMOVED: Duplicate export const API_BASE_URL = isTauri ? ...
 // ===============================
 // SAFE TAURI DETECTION
 // ===============================
@@ -21,6 +24,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
     typeof window.__TAURI_IPC__ !== "undefined"
   );
 };*/
+
 // ===============================
 // LAZY TAURI INVOKE (IMPORTANT FIX)
 // ===============================
@@ -95,7 +99,7 @@ export const api = {
     
 
      const query = new URLSearchParams(params).toString();
-     const url = query ? `${API_BASE_URL + endpoint}?${query}` : API_BASE_URL + endpoint;
+     const url = query ? `${endpoint}?${query}` : endpoint; // REMOVED API_BASE_URL refs
 
      const res = await fetch(url);
      if (!res.ok) throw new Error(await res.text());

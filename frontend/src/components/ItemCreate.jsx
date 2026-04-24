@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import api, { safeArray } from '../utils/api.js';
-import { MASTER_CONFIG, useMasterConfig } from '../utils/masterFields.js';
+import api from '../services/api.js';
+
+import { MASTER_CONFIG } from '../utils/masterConfig.js';
+import { safeArray } from '../utils/safeArray.js';
 import MasterFormLayout from './master/MasterFormLayout';
 import { FormSection, SmartField } from './master';
 import MasterActions from './master/MasterActions';
@@ -10,7 +12,8 @@ import './master/master.css';
 console.log("ITEM CREATE ACTIVE - CONFIG DRIVEN");
 
 const ItemCreate = () => {
-  const config = MASTER_CONFIG.item;
+  const config = MASTER_CONFIG.item || {};
+  const sections = safeArray(config.sections);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -22,16 +25,16 @@ const ItemCreate = () => {
 
   useEffect(() => {
     // Generate next item code
-    api.getMasters(config.table).then((res) => {
-      const count = safeArray(res.data).length;
+    api('/masters/items').then((res) => {
+      const count = Array.isArray(res?.data) ? res.data.length : 0;
       const nextCode = `ITM${String(count + 1).padStart(3, '0')}`;
       handleChange('item_code', nextCode);
     }).catch(err => console.log('Item code gen failed', err));
 
     // Init form with defaults
     const initialData = {};
-    config.sections.forEach(section => {
-      section.fields.forEach(field => {
+    sections.forEach(section => {
+      safeArray(section.fields).forEach(field => {
         if (field.defaultValue !== undefined) {
           initialData[field.name] = field.defaultValue;
         }
@@ -51,15 +54,21 @@ const ItemCreate = () => {
     setLoading(true);
     setMessage('');
     try {
-      const result = await api.createMaster(config.table, formData);
+      const result = await api('/masters/item_master', 'POST', formData);
 
+      if (!result) {
+        console.error("❌ API failed (null response)");
+        setMessage('Server error - check console');
+        setMessageType('error');
+        return;
+      }
       if (result.success) {
         setMessage('Item saved successfully!');
         setMessageType('success');
         // Reset form
         const resetData = {};
-        config.sections.forEach(section => {
-          section.fields.forEach(field => {
+        sections.forEach(section => {
+          safeArray(section.fields).forEach(field => {
             if (field.defaultValue !== undefined) {
               resetData[field.name] = field.defaultValue;
             } else {
@@ -85,8 +94,8 @@ const ItemCreate = () => {
 
   const handleCancel = () => {
     const resetData = {};
-    config.sections.forEach(section => {
-      section.fields.forEach(field => {
+    sections.forEach(section => {
+      safeArray(section.fields).forEach(field => {
         if (field.defaultValue !== undefined) {
           resetData[field.name] = field.defaultValue;
         } else {
@@ -102,9 +111,9 @@ const ItemCreate = () => {
     <MasterFormLayout title="Item Creation" onSave={handleSubmit} onCancel={handleCancel}>
       {message && <div className={`message ${messageType}`}>{message}</div>}
 
-      {config.sections.map((section, secIndex) => (
+      {sections.map((section, secIndex) => (
         <FormSection key={secIndex} title={section.title}>
-          {section.fields.map((field, fieldIndex) => (
+          {safeArray(section.fields).map((field, fieldIndex) => (
             <SmartField 
               key={fieldIndex} 
               field={field} 
@@ -127,3 +136,4 @@ const ItemCreate = () => {
 };
 
 export default ItemCreate;
+

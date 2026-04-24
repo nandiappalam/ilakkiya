@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { executeQuery, executeStatement } from '../utils/api'
+import { api } from '../utils/api.js'
 import './WeightConversionDisplay.css'
 
 const WeightConversionDisplay = () => {
@@ -18,7 +18,7 @@ const WeightConversionDisplay = () => {
   const loadWeightConversions = async () => {
     try {
       setLoading(true)
-      const result = await executeQuery('SELECT * FROM weight_conversion ORDER BY id DESC', [])
+      const result = await api('db/query', { method: 'POST', body: { sql: 'SELECT * FROM weight_conversion ORDER BY id DESC', params: [] } })
       
       if (result.success) {
         setRecords(result.data || [])
@@ -46,10 +46,7 @@ const WeightConversionDisplay = () => {
   const handleUpdate = async () => {
     try {
       const { id, date, remarks, type } = editDialog.data
-      const result = await executeStatement(
-        'UPDATE weight_conversion SET date = ?, remarks = ?, type = ? WHERE id = ?',
-        [date, remarks, type, id]
-      )
+      const result = await api('db/execute', { method: 'POST', body: { sql: 'UPDATE weight_conversion SET date = ?, remarks = ?, type = ? WHERE id = ?', params: [date, remarks, type, id] } })
       if (result.success) {
         setSnackbar({ open: true, message: 'Weight conversion updated successfully!', severity: 'success' })
         setEditDialog({ open: false, data: null })
@@ -64,7 +61,7 @@ const WeightConversionDisplay = () => {
     if (!window.confirm('Are you sure you want to delete this weight conversion?')) return
 
     try {
-      const result = await executeStatement('DELETE FROM weight_conversion WHERE id = ?', [id])
+      const result = await api('db/execute', { method: 'POST', body: { sql: 'DELETE FROM weight_conversion WHERE id = ?', params: [id] } })
       if (result.success) {
         setSnackbar({ open: true, message: 'Weight conversion deleted successfully!', severity: 'success' })
         loadWeightConversions()
