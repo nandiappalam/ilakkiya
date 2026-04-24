@@ -16,14 +16,11 @@ const SenderDisplay = () => {
 
   const loadSenders = async () => {
     try {
-const result = await getMasters('senders')
-      if (result.success) {
-        setSenders(result.data)
-      } else {
-        console.error('Error loading senders:', result.message)
-      }
+      const data = await getMasters('senders')
+      setSenders(data || [])
     } catch (error) {
       console.error('Error loading senders:', error)
+      setSenders([])
     } finally {
       setLoading(false)
     }

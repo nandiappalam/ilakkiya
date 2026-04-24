@@ -40,11 +40,19 @@
 }
 
 .form-section {
-  margin-bottom: 32px;
-  padding: 20px;
-  background: #fafbfc;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+/* Flat layout — no card borders */
+.flat-form .form-section {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.flat-form .section-title {
+  display: none;
 }
 
 .field-group {

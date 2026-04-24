@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { Box } from '@mui/material'
@@ -72,7 +72,18 @@ import TransportCreate from './components/TransportCreate'
 import TransportDisplay from './components/TransportDisplay'
 import GodownCreate from './components/master/GodownCreate'
 import GodownDisplay from './components/master/GodownDisplay'
+import { DynamicMasterForm, DynamicMasterDisplay } from './components/master'
 
+// Route wrappers for dynamic master modules
+const ModuleFormRoute = () => {
+  const { module } = useParams()
+  return <DynamicMasterForm configKey={module} />
+}
+
+const ModuleDisplayRoute = () => {
+  const { module } = useParams()
+  return <DynamicMasterDisplay configKey={module} />
+}
 
 // Financial Year
 import FinancialYearDisplay from './components/FinancialYearDisplay'
@@ -285,6 +296,10 @@ const AppLayout = () => {
 
           <Route path="/master/suppliers-create" element={<SupplierCreate />} />
           <Route path="/master/suppliers-display" element={<SupplierDisplay />} />
+
+          {/* Dynamic Master Routes (config-driven) */}
+          <Route path="/master/:module/create" element={<ModuleFormRoute />} />
+          <Route path="/master/:module/display" element={<ModuleDisplayRoute />} />
         </Routes>
       </Box>
     </>

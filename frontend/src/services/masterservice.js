@@ -1,5 +1,8 @@
 import api from '../services/api.js'
 
+// Re-export api for direct use
+export { api };
+
 export const safeArray = (data) => Array.isArray(data) ? data : [];
 
 export const getMasters = async (type) => {
@@ -8,8 +11,12 @@ export const getMasters = async (type) => {
     console.error("❌ API failed");
     return [];
   }
+  // Handle both {success: true, data: [...]} and direct array responses
+  if (Array.isArray(result)) {
+    return result;
+  }
   if (result.success) {
-    return result.data || result || [];
+    return result.data || [];
   }
   return [];
 };

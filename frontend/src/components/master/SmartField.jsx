@@ -14,6 +14,7 @@ export const SmartField = ({
 
   const fieldType = field.type || FIELD_TYPES[field.name] || 'text';
   const isMaster = field.masterType || MASTER_FIELD_TYPES[field.name];
+  const isSelect = fieldType === 'select' || fieldType === 'masterSelect' || !!isMaster;
   const isReadonly = field.readonly || false;
   const finalValue = value !== undefined ? value : field.defaultValue || '';
 
@@ -82,7 +83,7 @@ export const SmartField = ({
       
       {loading ? (
         <div className="uniform-input" style={{ opacity: 0.6 }}>Loading...</div>
-      ) : fieldType === 'select' ? (
+      ) : isSelect ? (
         <select {...inputProps}>
           <option value="">Select {labelText}</option>
           {safeArray(field.options || options).map(opt => {

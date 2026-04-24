@@ -2,22 +2,30 @@ const isTauri = typeof window !== "undefined" && window.__TAURI__;
 
 const BASE_URL = isTauri
   ? "http://localhost:5000"
-  : "http://localhost:5000"; // no trailing /api
+  : import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// Generic api handler - PREVENTS double /api
+// ✅ BASE_URL must NOT include /api — it is added per-request below
 export async function api(endpoint, options = {}) {
   if (!endpoint || typeof endpoint !== "string") {
     console.error("❌ Invalid endpoint:", endpoint);
     return null;
   }
+
+  // Ensure leading slash
+  if (!endpoint.startsWith("/")) {
+    endpoint = "/" + endpoint;
+  }
+
+  // ✅ Prevent double /api — only prepend if not already present
+  const cleanEndpoint = endpoint.startsWith("/api")
+    ? endpoint
+    : `/api${endpoint}`;
+
+  const url = `${BASE_URL}${cleanEndpoint}`;
+  console.log("🌐 FINAL URL:", url);
+
   try {
-    // ✅ prevent double /api
-    const cleanEndpoint = endpoint.startsWith("/api")
-      ? endpoint
-      : `/api${endpoint}`;
-
-    const res = await fetch(`${BASE_URL}${cleanEndpoint}`, {
-
+    const res = await fetch(url, {
       method: options.method || 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -26,15 +34,18 @@ export async function api(endpoint, options = {}) {
       body: options.body ? JSON.stringify(options.body) : undefined
     });
 
+    // ✅ Null-safe JSON parse
     if (!res.ok) {
-      console.error("API ERROR:", res.status, await res.text());
-      return null; // ❗ NO THROW
+      console.error("❌ API HTTP error:", res.status, res.statusText);
+      const text = await res.text();
+      console.error("❌ Response body:", text);
+      return { success: false, data: null, message: `HTTP ${res.status}: ${res.statusText}` };
     }
 
     return await res.json();
   } catch (err) {
     console.error("🔥 API FAILED:", err.message);
-    return null; // ❗ GRACEFUL
+    return { success: false, data: null, message: err.message };
   }
 }
 
