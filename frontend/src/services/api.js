@@ -1,11 +1,17 @@
 const isTauri = typeof window !== "undefined" && window.__TAURI__;
+const isDev = import.meta.env.DEV;
 
-const RAW_BASE_URL = isTauri
-  ? "http://localhost:5000"
-  : import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-// ✅ Defensive: strip trailing /api if incorrectly set in .env
-const BASE_URL = RAW_BASE_URL.replace(/\/api\/?$/, "");
+let BASE_URL;
+if (isTauri) {
+   BASE_URL = "http://localhost:5000";
+} else if (isDev) {
+  // Local development — frontend (vite dev server) talks to backend on port 5000
+  const envUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  BASE_URL = envUrl.replace(/\/api\/?$/, "");
+} else {
+  // Production (Render) — backend serves frontend, use same-origin relative URLs
+  BASE_URL = "";
+}
 
 // ✅ BASE_URL must NOT include /api — it is added per-request below
 export async function api(endpoint, method = "GET", body = null) {
