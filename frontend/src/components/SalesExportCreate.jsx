@@ -65,7 +65,11 @@ const SalesExportCreate = () => {
 
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...items];
-    updatedItems[index][field] = value;
+    if (field === '__batch__' && typeof value === 'object') {
+      updatedItems[index] = { ...updatedItems[index], ...value };
+    } else {
+      updatedItems[index] = { ...updatedItems[index], [field]: value };
+    }
     setItems(updatedItems);
   };
 

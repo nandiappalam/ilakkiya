@@ -50,9 +50,13 @@ const SalesExportOrderCreate = () => {
 
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...items]
-    updatedItems[index][field] = value
+    if (field === '__batch__' && typeof value === 'object') {
+      updatedItems[index] = { ...updatedItems[index], ...value }
+    } else {
+      updatedItems[index] = { ...updatedItems[index], [field]: value }
+    }
 
-    if (field === 'qty' || field === 'usdRate' || field === 'convRate') {
+    if (field === 'qty' || field === 'usdRate' || field === 'convRate' || (field === '__batch__' && ('qty' in value || 'usdRate' in value || 'convRate' in value))) {
       const qty = parseFloat(updatedItems[index].qty) || 0
       const usdRate = parseFloat(updatedItems[index].usdRate) || 0
       const convRate = parseFloat(updatedItems[index].convRate) || 0

@@ -22,9 +22,14 @@ const PurchaseCreationPage = () => {
 
   const handleTableChange = useCallback((index, field, value) => {
     setTableData(prev => {
-      const updated = prev.map((row, i) => 
-        i === index ? { ...row, [field]: field === 'item_name' ? value : parseFloat(value) || 0 } : row
-      );
+      let updated;
+      if (field === '__batch__' && typeof value === 'object') {
+        updated = prev.map((row, i) => i === index ? { ...row, ...value } : row);
+      } else {
+        updated = prev.map((row, i) => 
+          i === index ? { ...row, [field]: field === 'item_name' ? value : parseFloat(value) || 0 } : row
+        );
+      }
       // Recalculate
       return updated.map(row => {
         const totalWt = (row.weight || 0) * (row.qty || 0);

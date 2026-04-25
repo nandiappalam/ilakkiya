@@ -15,8 +15,7 @@ const StockAdjustCreate = () => {
   });
 
   const [items, setItems] = useState([
-    
-    { sNo: '', itemName: '', lotNo: '', weight: '', type: '', qty: '', totWt: '', rate: '', remarks: '' }
+    { sNo: '', item_name: '', lot_no: '', weight: '', type: '', qty: '', totWt: '', rate: '', remarks: '' }
   ]);
 
   const [loading, setLoading] = useState(false);
@@ -24,26 +23,33 @@ const StockAdjustCreate = () => {
   const [messageType, setMessageType] = useState('success');
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [e.target.name]: e.target.value
-    });
+    }));
   };
 
   const handleItemChange = (index, field, value) => {
-    const newItems = [...items];
-    newItems[index][field] = value;
-    setItems(newItems);
+    setItems(prevItems => {
+      const newItems = [...prevItems];
+      if (field === '__batch__' && typeof value === 'object') {
+        newItems[index] = { ...newItems[index], ...value };
+      } else {
+        newItems[index] = { ...newItems[index], [field]: value };
+      }
+      return newItems;
+    });
   };
 
   const addItemRow = () => {
-    setItems([...items, { sNo: '', itemName: '', lotNo: '', weight: '', type: '', qty: '', totWt: '', rate: '', remarks: '' }]);
+    setItems(prev => [...prev, { sNo: '', item_name: '', lot_no: '', weight: '', type: '', qty: '', totWt: '', rate: '', remarks: '' }]);
   };
 
   const removeItemRow = (index) => {
-    if (items.length > 1) {
-      setItems(items.filter((_, i) => i !== index));
-    }
+    setItems(prev => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -52,7 +58,6 @@ const StockAdjustCreate = () => {
     setMessage('');
 
     try {
-      // API call would go here
       setMessage('Stock Adjust saved successfully!');
       setMessageType('success');
       setTimeout(() => setMessage(''), 3000);
@@ -75,8 +80,8 @@ const StockAdjustCreate = () => {
 
   const itemColumns = [
     { key: 'sNo', title: 'S.No' },
-    { key: 'itemName', title: 'Item Name' },
-    { key: 'lotNo', title: 'Lot No' },
+    { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'items' },
+    { key: 'lot_no', title: 'Lot No', type: 'lotSelect' },
     { key: 'weight', title: 'Weight', type: 'number' },
     { key: 'type', title: 'Type' },
     { key: 'qty', title: 'Qty', type: 'number' },
@@ -109,6 +114,7 @@ const StockAdjustCreate = () => {
           onAddRow={addItemRow}
           onDeleteRow={removeItemRow}
           showActions={true}
+          lotMode="select"
         />
       </EntrySection>
 

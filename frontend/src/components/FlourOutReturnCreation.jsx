@@ -14,7 +14,7 @@ const FlourOutReturnCreation = () => {
   })
 
   const [items, setItems] = useState([
-    { no: 1, itemName: '', weight: '', qty: '', totalWt: '', papadKg: '', cost: '', wagesBag: '', wages: '' }
+    { no: 1, item_name: '', lot_no: '', weight: '', qty: '', total_wt: '', papad_kg: '', cost: '', wages_per_bag: '', wages: '' }
   ])
 
   const [totals, setTotals] = useState({
@@ -33,50 +33,60 @@ const FlourOutReturnCreation = () => {
   }
 
   const handleItemChange = (index, field, value) => {
-    const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(prevItems => {
+      const newItems = [...prevItems];
+      if (field === '__batch__' && typeof value === 'object') {
+        newItems[index] = { ...newItems[index], ...value };
+      } else {
+        newItems[index] = { ...newItems[index], [field]: value };
+      }
 
-    if (field === 'weight' || field === 'qty') {
-      const weight = parseFloat(newItems[index].weight) || 0;
-      const qty = parseFloat(newItems[index].qty) || 0;
-      newItems[index].totalWt = (weight * qty).toFixed(2);
-    }
+      if (field === 'weight' || field === 'qty' || (field === '__batch__' && ('weight' in value || 'qty' in value))) {
+        const weight = parseFloat(newItems[index].weight) || 0;
+        const qty = parseFloat(newItems[index].qty) || 0;
+        newItems[index].total_wt = (weight * qty).toFixed(2);
+      }
 
-    if (field === 'qty' || field === 'wagesBag') {
-      const qty = parseFloat(newItems[index].qty) || 0;
-      const wagesBag = parseFloat(newItems[index].wagesBag) || 0;
-      newItems[index].wages = (qty * wagesBag).toFixed(2);
-    }
+      if (field === 'qty' || field === 'wages_per_bag' || (field === '__batch__' && ('qty' in value || 'wages_per_bag' in value))) {
+        const qty = parseFloat(newItems[index].qty) || 0;
+        const wagesBag = parseFloat(newItems[index].wages_per_bag) || 0;
+        newItems[index].wages = (qty * wagesBag).toFixed(2);
+      }
 
-    setItems(newItems);
-    updateTotals(newItems);
+      updateTotals(newItems);
+      return newItems;
+    });
   }
 
   const updateTotals = (itemsList) => {
     const qty = itemsList.reduce((sum, item) => sum + (parseFloat(item.qty) || 0), 0);
-    const weight = itemsList.reduce((sum, item) => sum + (parseFloat(item.totalWt) || 0), 0);
+    const weight = itemsList.reduce((sum, item) => sum + (parseFloat(item.total_wt) || 0), 0);
     const wages = itemsList.reduce((sum, item) => sum + (parseFloat(item.wages) || 0), 0);
     setTotals({ totalQty: qty, totalWeight: weight, totalWages: wages });
   }
 
   const addRow = () => {
-    setItems([...items, { 
-      no: items.length + 1, 
-      itemName: '', 
+    setItems(prev => [...prev, { 
+      no: prev.length + 1, 
+      item_name: '', 
+      lot_no: '', 
       weight: '', 
       qty: '', 
-      totalWt: '', 
-      papadKg: '', 
+      total_wt: '', 
+      papad_kg: '', 
       cost: '', 
-      wagesBag: '', 
+      wages_per_bag: '', 
       wages: '' 
     }]);
   }
 
   const deleteRow = (index) => {
-    const newItems = items.filter((_, i) => i !== index);
-    setItems(newItems);
-    updateTotals(newItems);
+    setItems(prev => {
+      if (prev.length <= 1) return prev;
+      const newItems = prev.filter((_, i) => i !== index);
+      updateTotals(newItems);
+      return newItems;
+    });
   }
 
   const handleSave = async () => {
@@ -92,14 +102,13 @@ const FlourOutReturnCreation = () => {
         totalWages: totals.totalWages
       };
 
-      // Use Tauri API instead of fetch
       const result = await api.createFlourOutReturn(data);
 
       if (result && result.success) {
         setMessage('Flour out return saved successfully!');
         setMessageType('success');
         setFormData({ sno: 1, date: '', taxType: '', remarks: '' });
-        setItems([{ no: 1, itemName: '', weight: '', qty: '', totalWt: '', papadKg: '', cost: '', wagesBag: '', wages: '' }]);
+        setItems([{ no: 1, item_name: '', lot_no: '', weight: '', qty: '', total_wt: '', papad_kg: '', cost: '', wages_per_bag: '', wages: '' }]);
         setTotals({ totalQty: 0, totalWeight: 0, totalWages: 0 });
         setTimeout(() => setMessage(''), 3000);
       } else {
@@ -163,8 +172,7 @@ const FlourOutReturnCreation = () => {
           onAddRow={addRow}
           onDeleteRow={deleteRow}
           showActions={true}
-          autoLotMode={false}
-          itemColumnKey="item_name"
+          lotMode="select"
         />
       </EntrySection>
 

@@ -38,16 +38,20 @@ const FlourOutReturnCreationPage = () => {
   const handleRowChange = useCallback((index, field, value) => {
     setRows(prev => {
       const newRows = [...prev];
-      newRows[index][field] = value;
+      if (field === '__batch__' && typeof value === 'object') {
+        newRows[index] = { ...newRows[index], ...value };
+      } else {
+        newRows[index] = { ...newRows[index], [field]: value };
+      }
       
       // Recalculate
       const weight = parseFloat(newRows[index].weight) || 0;
       const qty = parseFloat(newRows[index].qty) || 0;
-      newRows[index].total_wt = weight * qty;
+      newRows[index].total_wt = (weight * qty).toFixed(2);
       
       const papadKg = parseFloat(newRows[index].papad_kg) || 0;
       const wagesPerBag = parseFloat(newRows[index].wages_per_bag) || 0;
-      newRows[index].wages = papadKg * wagesPerBag;
+      newRows[index].wages = (papadKg * wagesPerBag).toFixed(2);
       
       return newRows;
     });

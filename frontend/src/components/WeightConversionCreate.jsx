@@ -14,9 +14,9 @@ const WeightConversionCreate = () => {
   })
 
   const [items, setItems] = useState([
-    { item_name: '', lot_no: '', weight: '', qty: '', total_wt: '' },
-    { item_name: '', lot_no: '', weight: '', qty: '', total_wt: '' },
     { item_name: '', lot_no: '', weight: '', qty: '', total_wt: '' }
+    //{ item_name: '', lot_no: '', weight: '', qty: '', total_wt: '' },
+   // { item_name: '', lot_no: '', weight: '', qty: '', total_wt: '' }
   ])
 
   const [loading, setLoading] = useState(false)
@@ -29,27 +29,34 @@ const WeightConversionCreate = () => {
   }
 
   const handleItemChange = (index, field, value) => {
-    const updatedItems = [...items]
-    updatedItems[index][field] = value
+    setItems(prevItems => {
+      const updatedItems = [...prevItems]
+      if (field === '__batch__' && typeof value === 'object') {
+        updatedItems[index] = { ...updatedItems[index], ...value }
+      } else {
+        updatedItems[index] = { ...updatedItems[index], [field]: value }
+      }
 
-    // Auto-calculate total weight if weight and qty are provided
-    if (field === 'weight' || field === 'qty') {
-      const weight = parseFloat(updatedItems[index].weight) || 0
-      const qty = parseFloat(updatedItems[index].qty) || 0
-      updatedItems[index].total_wt = (weight * qty).toFixed(2)
-    }
+      // Auto-calculate total weight if weight and qty are provided
+      if (field === 'weight' || field === 'qty' || (field === '__batch__' && ('weight' in value || 'qty' in value))) {
+        const weight = parseFloat(updatedItems[index].weight) || 0
+        const qty = parseFloat(updatedItems[index].qty) || 0
+        updatedItems[index].total_wt = (weight * qty).toFixed(2)
+      }
 
-    setItems(updatedItems)
+      return updatedItems
+    })
   }
 
   const addItemRow = () => {
-    setItems([...items, { item_name: '', lot_no: '', weight: '', qty: '', total_wt: '' }])
+    setItems(prev => [...prev, { item_name: '', lot_no: '', weight: '', qty: '', total_wt: '' }])
   }
 
   const removeItemRow = (index) => {
-    if (items.length > 1) {
-      setItems(items.filter((_, i) => i !== index))
-    }
+    setItems(prev => {
+      if (prev.length <= 1) return prev
+      return prev.filter((_, i) => i !== index)
+    })
   }
 
   const handleSubmit = async (e) => {
@@ -112,8 +119,8 @@ const WeightConversionCreate = () => {
 
   const itemColumns = [
     { key: 'sno', title: 'S.No', width: '30px', render: (_, __, index) => index + 1 },
-    { key: 'item_name', title: 'Item Name' },
-    { key: 'lot_no', title: 'Lot No' },
+    { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'items' },
+    { key: 'lot_no', title: 'Lot No', type: 'lotSelect' },
     { key: 'weight', title: 'Weight', type: 'number' },
     { key: 'qty', title: 'Qty', type: 'number' },
     { key: 'total_wt', title: 'Tot Wt', type: 'number' },
@@ -143,6 +150,7 @@ const WeightConversionCreate = () => {
           onAddRow={addItemRow}
           onDeleteRow={removeItemRow}
           showActions={true}
+          lotMode="select"
         />
       </EntrySection>
 

@@ -11,17 +11,16 @@ import {
 } from './entry';
 
 const PapadInCreate = () => {
-const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     date: new Date().toISOString().slice(0, 10),
     wt_scale: 'No',
     remarks: '',
     papad_company: '',
   })
 
-const [rows, setRows] = useState([{}])
+  const [rows, setRows] = useState([{}])
 
-  // ✅ FIXED: Papad Company master dropdown + tax
-const topFrameFields = [
+  const topFrameFields = [
     { name: 'date', label: 'Date', type: 'date' },
     { name: 'wt_scale', label: 'Wt Scale', type: 'select', options: [
       {value: 'Yes', label: 'Yes'},
@@ -31,7 +30,7 @@ const topFrameFields = [
     { name: 'remarks', label: 'Remarks', type: 'text' }
   ]
 
-const unifiedColumns = [
+  const unifiedColumns = [
     { key: 's_no', title: 'S.No', readOnly: true },
     { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'items' },
     { key: 'lot_no', title: 'Lot No', type: 'text', readOnly: true },
@@ -45,30 +44,37 @@ const unifiedColumns = [
 
   const handleFieldChange = (e) => {
     const { name, value } = e.target
-    setFormData({ ...formData, [name]: value })
+    setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-const handleRowChange = (index, field, value) => {
-    const newRows = [...rows]
-    newRows[index][field] = value
-    setRows(newRows)
-  }
+  const handleRowChange = useCallback((index, field, value) => {
+    setRows(prevRows => {
+      const newRows = [...prevRows]
+      if (field === '__batch__' && typeof value === 'object') {
+        newRows[index] = { ...newRows[index], ...value }
+      } else {
+        newRows[index] = { ...newRows[index], [field]: value }
+      }
+      return newRows
+    })
+  }, [])
 
-  const addRow = (newRow = {}) => {
+  const addRow = useCallback((newRow = {}) => {
     setRows(prev => [...prev, newRow])
-  }
+  }, [])
 
-  const deleteRow = (index) => {
-    if (rows.length > 1) {
-      setRows(prev => prev.filter((_, i) => i !== index))
-    }
-  }
+  const deleteRow = useCallback((index) => {
+    setRows(prev => {
+      if (prev.length <= 1) return prev
+      return prev.filter((_, i) => i !== index)
+    })
+  }, [])
 
   const handleSubmit = (e) => {
     e.preventDefault()
     console.log('Papad In Data:', {
       header: formData,
-      papadFlourItems
+      rows
     })
     // TODO: Submit to API
   }
@@ -96,7 +102,6 @@ const handleRowChange = (index, field, value) => {
           onDeleteRow={deleteRow}
           showActions={true}
           lotMode="auto"
-          itemColumnKey="item_name"
         />
 
         <EntryTotalsRow totals={[]} />

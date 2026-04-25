@@ -41,7 +41,11 @@ const PackingCreate = () => {
   const handlePackingFromChange = useCallback((index, field, value) => {
     setPackingFrom(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      if (field === '__batch__' && typeof value === 'object') {
+        updated[index] = { ...updated[index], ...value };
+      } else {
+        updated[index] = { ...updated[index], [field]: value };
+      }
       return updated;
     });
   }, []);
@@ -49,7 +53,11 @@ const PackingCreate = () => {
   const handlePackingMaterialChange = useCallback((index, field, value) => {
     setPackingMaterial(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      if (field === '__batch__' && typeof value === 'object') {
+        updated[index] = { ...updated[index], ...value };
+      } else {
+        updated[index] = { ...updated[index], [field]: value };
+      }
       return updated;
     });
   }, []);
@@ -57,7 +65,11 @@ const PackingCreate = () => {
   const handlePackingToChange = useCallback((index, field, value) => {
     setPackingTo(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      if (field === '__batch__' && typeof value === 'object') {
+        updated[index] = { ...updated[index], ...value };
+      } else {
+        updated[index] = { ...updated[index], [field]: value };
+      }
       return updated;
     });
   }, []);

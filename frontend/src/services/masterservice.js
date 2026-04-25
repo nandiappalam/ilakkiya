@@ -21,6 +21,22 @@ export const getMasters = async (type) => {
   return [];
 };
 
+// Get FULL records (all columns) for display tables
+export const getAllMasters = async (table) => {
+  const result = await api(`/masters/all/${table}`);
+  if (!result) {
+    console.error("❌ API failed");
+    return [];
+  }
+  if (Array.isArray(result)) {
+    return result;
+  }
+  if (result.success) {
+    return result.data || [];
+  }
+  return [];
+};
+
 export const createMaster = async (table, data) => {
   const result = await api(`/masters/${table}`, 'POST', data);
   if (!result) {

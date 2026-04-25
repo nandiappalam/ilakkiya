@@ -56,26 +56,31 @@ const PurchaseReturn = () => {
   }
 
   const handleItemChange = (index, field, value) => {
-    const updatedItems = [...items];
-    updatedItems[index] = { ...updatedItems[index], [field]: value };
-    
-    // Auto-calculate
-    const weight = parseFloat(updatedItems[index].weight) || 0;
-    const qty = parseFloat(updatedItems[index].qty) || 0;
-    const rate = parseFloat(updatedItems[index].rate) || 0;
-    const disc = parseFloat(updatedItems[index].disc) || 0;
-    const tax = parseFloat(updatedItems[index].tax) || 0;
+    setItems(prevItems => {
+      const updatedItems = [...prevItems];
+      if (field === '__batch__' && typeof value === 'object') {
+        updatedItems[index] = { ...updatedItems[index], ...value };
+      } else {
+        updatedItems[index] = { ...updatedItems[index], [field]: value };
+      }
+      
+      // Auto-calculate
+      const weight = parseFloat(updatedItems[index].weight) || 0;
+      const qty = parseFloat(updatedItems[index].qty) || 0;
+      const rate = parseFloat(updatedItems[index].rate) || 0;
+      const disc = parseFloat(updatedItems[index].disc) || 0;
+      const tax = parseFloat(updatedItems[index].tax) || 0;
 
-    const totalwt = weight * qty;
-    let amt = qty * rate;
-    amt -= (amt * disc) / 100;
-    amt += (amt * tax) / 100;
+      const totalwt = weight * qty;
+      let amt = qty * rate;
+      amt -= (amt * disc) / 100;
+      amt += (amt * tax) / 100;
 
-    updatedItems[index].totalWt = totalwt;
-    updatedItems[index].amount = amt;
+      updatedItems[index].totalWt = totalwt;
+      updatedItems[index].amount = amt;
 
-    setItems(updatedItems);
-    calculateTotals(updatedItems);
+      return updatedItems;
+    });
   }
 
   const calculateTotals = (currentItems) => {
@@ -106,7 +111,7 @@ const PurchaseReturn = () => {
 
   const addItem = () => {
     const newId = Math.max(...items.map(item => item.id), 0) + 1;
-    setItems([...items, {
+    setItems(prev => [...prev, {
       id: newId,
       item_name: '',
       lot_no: '',
@@ -121,9 +126,12 @@ const PurchaseReturn = () => {
   }
 
   const deleteItem = (index) => {
-    const updatedItems = items.filter((_, i) => i !== index);
-    setItems(updatedItems);
-    calculateTotals(updatedItems);
+    setItems(prev => {
+      if (prev.length <= 1) return prev;
+      const updatedItems = prev.filter((_, i) => i !== index);
+      calculateTotals(updatedItems);
+      return updatedItems;
+    });
   }
 
   const handleDeductionChange = (field, value) => {
@@ -149,7 +157,6 @@ const PurchaseReturn = () => {
       if (response.ok) {
         setMessage('Purchase return saved successfully!');
         setMessageType('success');
-        // Reset form
         setFormData({
           sNo: 1,
           date: '',
@@ -214,7 +221,7 @@ const PurchaseReturn = () => {
 
   const itemColumns = [
     { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'items' },
-    { key: 'lot_no', title: 'Lot No' },
+    { key: 'lot_no', title: 'Lot No', type: 'lotSelect' },
     { key: 'weight', title: 'Weight', type: 'number' },
     { key: 'qty', title: 'Qty', type: 'number' },
     { key: 'total_wt', title: 'Total Wt', readOnly: true },

@@ -77,7 +77,11 @@ const [rows, setRows] = useState([{}])
   const handleRowChange = useCallback((index, field, value) => {
     setRows(prevRows => {
       const updatedRows = [...prevRows]
-      updatedRows[index] = { ...updatedRows[index], [field]: value }
+      if (field === '__batch__' && typeof value === 'object') {
+        updatedRows[index] = { ...updatedRows[index], ...value }
+      } else {
+        updatedRows[index] = { ...updatedRows[index], [field]: value }
+      }
       return updatedRows
     })
   }, [])

@@ -27,7 +27,6 @@ const QuotationCreate = () => {
 
   const [items, setItems] = useState([
     { id: 1, item_name: '', qty: '', box: '', rate: '', disc: '', tax: '', amount: '' }
-   
   ]);
 
   const handleInputChange = (e) => {
@@ -35,8 +34,28 @@ const QuotationCreate = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleItemChange = (id, field, value) => {
-    setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
+  const handleRowChange = (rowIndex, key, value) => {
+    setItems(prevItems => {
+      const newItems = [...prevItems];
+      if (key === '__batch__' && typeof value === 'object') {
+        newItems[rowIndex] = { ...newItems[rowIndex], ...value };
+      } else {
+        newItems[rowIndex] = { ...newItems[rowIndex], [key]: value };
+      }
+      return newItems;
+    });
+  };
+
+  const addItemRow = () => {
+    const newId = Math.max(...items.map(i => i.id), 0) + 1;
+    setItems(prev => [...prev, { id: newId, item_name: '', qty: '', box: '', rate: '', disc: '', tax: '', amount: '' }]);
+  };
+
+  const deleteItemRow = (index) => {
+    setItems(prev => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const handleSave = async (e) => {
@@ -70,10 +89,7 @@ const QuotationCreate = () => {
           deduction_remarks: ''
         });
         setItems([
-          { id: 1, item_name: '', qty: '', box: '', rate: '', disc: '', tax: '', amount: '' },
-          { id: 2, item_name: '', qty: '', box: '', rate: '', disc: '', tax: '', amount: '' },
-          { id: 3, item_name: '', qty: '', box: '', rate: '', disc: '', tax: '', amount: '' },
-          { id: 4, item_name: '', qty: '', box: '', rate: '', disc: '', tax: '', amount: '' }
+          { id: 1, item_name: '', qty: '', box: '', rate: '', disc: '', tax: '', amount: '' }
         ]);
       } else {
         alert('Error saving quotation');
@@ -97,30 +113,13 @@ const QuotationCreate = () => {
   const itemColumns = [
     { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'items' },
     { key: 'lot_no', title: 'Lot No', type: 'lotSelect' },
-    { key: 'qty', title: 'Qty' },
-    { key: 'box', title: 'Box' },
-    { key: 'rate', title: 'Rate' },
-    { key: 'disc', title: 'Disc %' },
-    { key: 'tax', title: 'Tax %' },
-    { key: 'amount', title: 'Amount' }
+    { key: 'qty', title: 'Qty', type: 'number' },
+    { key: 'box', title: 'Box', type: 'number' },
+    { key: 'rate', title: 'Rate', type: 'number' },
+    { key: 'disc', title: 'Disc %', type: 'number' },
+    { key: 'tax', title: 'Tax %', type: 'number' },
+    { key: 'amount', title: 'Amount', type: 'number' }
   ];
-
-  const handleRowChange = (rowIndex, key, value) => {
-    const newItems = [...items];
-    newItems[rowIndex] = { ...newItems[rowIndex], [key]: value };
-    setItems(newItems);
-  };
-
-  const addItemRow = () => {
-    const newId = Math.max(...items.map(i => i.id)) + 1;
-    setItems([...items, { id: newId, item_name: '', qty: '', box: '', rate: '', disc: '', tax: '', amount: '' }]);
-  };
-
-  const deleteItemRow = (index) => {
-    if (items.length > 1) {
-      setItems(items.filter((_, i) => i !== index));
-    }
-  };
 
   const totals = [
     { name: 'tax_percent', label: 'Tax %', value: formData.tax_percent },
@@ -141,12 +140,11 @@ const QuotationCreate = () => {
     <div className="window">
       <div className="screen-title">Quotation Creation</div>
 
-  <EntryTopFrame 
+      <EntryTopFrame 
         fields={topFrameFields} 
         data={formData} 
         onChange={handleInputChange}
       />
-      {/* Note: masterSelect customer_id will autofill address via onChange obj handling in EntryTopFrame */}
 
       <EntryItemsTable 
         columns={itemColumns}
@@ -155,6 +153,7 @@ const QuotationCreate = () => {
         onAddRow={addItemRow}
         onDeleteRow={deleteItemRow}
         showActions={true}
+        lotMode="select"
       />
 
       <EntryTotalsRow totals={totals} />

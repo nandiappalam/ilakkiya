@@ -33,25 +33,31 @@ const FlourOutCreation = () => {
   }
 
   const handleItemChange = (index, field, value) => {
-    const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(prevItems => {
+      const newItems = [...prevItems];
+      if (field === '__batch__' && typeof value === 'object') {
+        newItems[index] = { ...newItems[index], ...value };
+      } else {
+        newItems[index] = { ...newItems[index], [field]: value };
+      }
 
-    // Auto-calculate total weight
-    if (field === 'weight' || field === 'qty') {
-      const weight = parseFloat(newItems[index].weight) || 0;
-      const qty = parseFloat(newItems[index].qty) || 0;
-      newItems[index].total_wt = weight * qty;
-    }
+      // Auto-calculate total weight
+      if (field === 'weight' || field === 'qty' || (field === '__batch__' && ('weight' in value || 'qty' in value))) {
+        const weight = parseFloat(newItems[index].weight) || 0;
+        const qty = parseFloat(newItems[index].qty) || 0;
+        newItems[index].total_wt = weight * qty;
+      }
 
-    // Auto-calculate wages
-    if (field === 'papad_kg' || field === 'wages_bag') {
-      const papadKg = parseFloat(newItems[index].papad_kg) || 0;
-      const wagesBag = parseFloat(newItems[index].wages_bag) || 0;
-      newItems[index].wages = papadKg * wagesBag;
-    }
+      // Auto-calculate wages
+      if (field === 'papad_kg' || field === 'wages_bag' || (field === '__batch__' && ('papad_kg' in value || 'wages_bag' in value))) {
+        const papadKg = parseFloat(newItems[index].papad_kg) || 0;
+        const wagesBag = parseFloat(newItems[index].wages_bag) || 0;
+        newItems[index].wages = papadKg * wagesBag;
+      }
 
-    setItems(newItems);
-    calculateTotals(newItems);
+      calculateTotals(newItems);
+      return newItems;
+    });
   }
 
   const calculateTotals = (currentItems) => {
@@ -71,15 +77,16 @@ const FlourOutCreation = () => {
   }
 
   const addItem = () => {
-    setItems([...items, { item_name: '', lot_no: '', weight: 0, qty: 0, total_wt: 0, papad_kg: 0, wages_bag: 0, wages: 0 }]);
+    setItems(prev => [...prev, { item_name: '', lot_no: '', weight: 0, qty: 0, total_wt: 0, papad_kg: 0, wages_bag: 0, wages: 0 }]);
   }
 
   const removeItem = (index) => {
-    if (items.length > 1) {
-      const newItems = items.filter((_, i) => i !== index);
-      setItems(newItems);
+    setItems(prev => {
+      if (prev.length <= 1) return prev;
+      const newItems = prev.filter((_, i) => i !== index);
       calculateTotals(newItems);
-    }
+      return newItems;
+    });
   }
 
   const handleSubmit = async (e) => {
@@ -95,7 +102,6 @@ const FlourOutCreation = () => {
     setMessage('');
 
     try {
-      // Use Tauri API instead of fetch
       const result = await api.createFlourOut(formData, items);
 
       if (result && result.success) {
@@ -131,14 +137,14 @@ const FlourOutCreation = () => {
   ];
 
   const itemColumns = [
-    { key: 'item_name', title: 'Item Name' },
-    { key: 'lot_no', title: 'Lot No' },
+    { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'items' },
+    { key: 'lot_no', title: 'Lot No', type: 'lotSelect' },
     { key: 'weight', title: 'Weight', type: 'number' },
     { key: 'qty', title: 'Qty', type: 'number' },
-    { key: 'total_wt', title: 'Total Wt', type: 'number' },
+    { key: 'total_wt', title: 'Total Wt', readOnly: true },
     { key: 'papad_kg', title: 'Papad Kg', type: 'number' },
     { key: 'wages_bag', title: 'Wages/Bag', type: 'number' },
-    { key: 'wages', title: 'Wages', type: 'number' },
+    { key: 'wages', title: 'Wages', readOnly: true },
   ];
 
   const totalsArr = [
@@ -171,6 +177,7 @@ const FlourOutCreation = () => {
           onAddRow={addItem}
           onDeleteRow={removeItem}
           showActions={true}
+          lotMode="select"
         />
       </EntrySection>
 

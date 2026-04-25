@@ -160,26 +160,28 @@ const EntryItemsTable = ({
 
   const handleCellChange = useCallback((rowIndex, key, value, valueId = null) => {
     if (key === 'item_name') {
-      // Update display name and ID
-      onRowChange(rowIndex, 'item_name', value);
+      // Batch all item_name-related updates into a single object to avoid race conditions
+      const updates = {
+        item_name: value,
+        lot_no: '',
+        available_lots: []
+      };
       if (valueId !== null) {
-        onRowChange(rowIndex, 'item_name_id', valueId);
+        updates.item_name_id = valueId;
       }
-      // Reset lot
-      onRowChange(rowIndex, 'lot_no', '');
-      onRowChange(rowIndex, 'available_lots', []);
+      onRowChange(rowIndex, '__batch__', updates);
 
-      // Load available lots for this item
+      // Load available lots for this item asynchronously
       const loadLots = async () => {
         if (!value) return;
         try {
           const lots = await api(`/stock/available/${encodeURIComponent(value)}`);
           const availableLots = safeArray(lots.data || lots).filter(l => (l.balance_qty || l.remaining_quantity || 0) > 0);
-          onRowChange(rowIndex, 'available_lots', availableLots);
+          onRowChange(rowIndex, '__batch__', { available_lots: availableLots });
           if (DEBUG) console.log(`Loaded ${availableLots.length} lots for "${value}"`);
         } catch (err) {
           console.error(`LOT LOAD ERROR for ${value}:`, err);
-          onRowChange(rowIndex, 'available_lots', []);
+          onRowChange(rowIndex, '__batch__', { available_lots: [] });
         }
       };
       loadLots();

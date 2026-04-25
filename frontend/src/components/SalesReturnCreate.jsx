@@ -39,15 +39,6 @@ const SalesReturnCreate = () => {
     total_amt: 0,
   })
 
-  const [deductions, setDeductions] = useState([
-    {
-      deduction: '',
-      percent: 0,
-      amount: 0,
-      remarks: '',
-    },
-  ])
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('success');
@@ -58,22 +49,27 @@ const SalesReturnCreate = () => {
   }
 
   const handleItemChange = (index, field, value) => {
-    const updatedItems = [...items]
-    updatedItems[index][field] = value
-    
-    if (field === 'qty' || field === 'rate' || field === 'disc_perc' || field === 'tax_perc') {
-      const qty = parseFloat(updatedItems[index].qty) || 0
-      const rate = parseFloat(updatedItems[index].rate) || 0
-      const discPerc = parseFloat(updatedItems[index].disc_perc) || 0
-      const taxPerc = parseFloat(updatedItems[index].tax_perc) || 0
-      const discAmount = (qty * rate * discPerc) / 100
-      const taxableAmount = qty * rate - discAmount
-      const taxAmount = (taxableAmount * taxPerc) / 100
-      updatedItems[index].amount = taxableAmount + taxAmount
-    }
-    
-    setItems(updatedItems)
-    calculateTotals(updatedItems)
+    setItems(prevItems => {
+      const updatedItems = [...prevItems]
+      if (field === '__batch__' && typeof value === 'object') {
+        updatedItems[index] = { ...updatedItems[index], ...value }
+      } else {
+        updatedItems[index] = { ...updatedItems[index], [field]: value }
+      }
+      
+      if (field === 'qty' || field === 'rate' || field === 'disc_perc' || field === 'tax_perc' || (field === '__batch__' && ('qty' in value || 'rate' in value || 'disc_perc' in value || 'tax_perc' in value))) {
+        const qty = parseFloat(updatedItems[index].qty) || 0
+        const rate = parseFloat(updatedItems[index].rate) || 0
+        const discPerc = parseFloat(updatedItems[index].disc_perc) || 0
+        const taxPerc = parseFloat(updatedItems[index].tax_perc) || 0
+        const discAmount = (qty * rate * discPerc) / 100
+        const taxableAmount = qty * rate - discAmount
+        const taxAmount = (taxableAmount * taxPerc) / 100
+        updatedItems[index].amount = taxableAmount + taxAmount
+      }
+      
+      return updatedItems
+    })
   }
 
   const calculateTotals = (currentItems) => {
@@ -84,7 +80,7 @@ const SalesReturnCreate = () => {
   }
 
   const addItem = () => {
-    setItems([...items, {
+    setItems(prev => [...prev, {
       item_name: '',
       lot_no: '',
       qty: '',
@@ -97,9 +93,10 @@ const SalesReturnCreate = () => {
   }
 
   const removeItem = (index) => {
-    const updatedItems = items.filter((_, i) => i !== index)
-    setItems(updatedItems)
-    calculateTotals(updatedItems)
+    setItems(prev => {
+      if (prev.length <= 1) return prev
+      return prev.filter((_, i) => i !== index)
+    })
   }
 
   const handleSave = async () => {
@@ -153,21 +150,21 @@ const SalesReturnCreate = () => {
   const topFrameFields = [
     { name: 's_no', label: 'Bill No', value: formData.s_no },
     { name: 'date', label: 'Date', type: 'date', value: formData.date },
-    { name: 'customer', label: 'Customer', value: formData.customer },
-    { name: 'pay_type', label: 'Pay Type', value: formData.pay_type },
-    { name: 'tax_type', label: 'Tax Type', value: formData.tax_type },
+    { name: 'customer_id', label: 'Customer', type: 'masterSelect', masterType: 'customers' },
+    { name: 'pay_type', label: 'Pay Type', type: 'select', options: [{value:'Cash', label:'Cash'},{value:'Credit', label:'Credit'}] },
+    { name: 'tax_type', label: 'Tax Type', type: 'select', options: [{value:'Exclusive', label:'Exclusive'},{value:'Inclusive', label:'Inclusive'}] },
     { name: 'address', label: 'Address', value: formData.address },
   ];
 
   const itemColumns = [
-    { key: 'item_name', title: 'Item Name' },
-    { key: 'lot_no', title: 'Lot No' },
+    { key: 'item_name', title: 'Item Name', type: 'masterSelect', masterType: 'items' },
+    { key: 'lot_no', title: 'Lot No', type: 'lotSelect' },
     { key: 'qty', title: 'Qty', type: 'number' },
     { key: 'box', title: 'Box', type: 'number' },
     { key: 'rate', title: 'Rate', type: 'number' },
     { key: 'disc_perc', title: 'Disc %', type: 'number' },
     { key: 'tax_perc', title: 'Tax %', type: 'number' },
-    { key: 'amount', title: 'Amount', type: 'number' },
+    { key: 'amount', title: 'Amount', readOnly: true },
   ];
 
   const totals = [
@@ -202,6 +199,7 @@ const SalesReturnCreate = () => {
         onAddRow={addItem}
         onDeleteRow={removeItem}
         showActions={true}
+        lotMode="select"
       />
 
       <EntryTotalsRow totals={totals} />

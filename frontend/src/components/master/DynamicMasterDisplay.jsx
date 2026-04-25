@@ -2,37 +2,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { MASTER_CONFIG } from "../../utils/masterConfig.js";
 import { safeArray } from "../../utils/safeArray.js";
-import { getMasters, deleteMaster } from "../../services/masterservice.js";
+import { getAllMasters, deleteMaster } from "../../services/masterservice.js";
 import MasterTableLayout from "./MasterTableLayout";
 import "./master.css";
-
-// Map config keys to API plural names used by getMasters
-const API_NAME_MAP = {
-  sender: "senders",
-  consignee: "consignees",
-  area: "areas",
-  city: "cities",
-  transport: "transports",
-  p_trans: "ptrans",
-  godown: "godowns",
-  customer: "customers",
-  supplier: "suppliers",
-  flour_mill: "flour_mills",
-  papad_company: "papad_companies",
-  weight: "weights",
-  ledger_group: "ledger_groups",
-  ledger: "ledgers",
-  item: "items",
-  item_group: "item_groups",
-  deduction_sales: "deduction_sales",
-  deduction_purchase: "deduction_purchase",
-};
 
 export const DynamicMasterDisplay = ({ configKey }) => {
   const navigate = useNavigate();
   const config = MASTER_CONFIG[configKey] || {};
   const title = config.title || configKey.replace(/_/g, " ").toUpperCase();
-  const apiName = API_NAME_MAP[configKey] || configKey;
+  const tableName = config.table || configKey;
 
   // Auto-generate columns from first section fields (up to 6) + status
   const columns = React.useMemo(() => {
@@ -54,8 +32,9 @@ export const DynamicMasterDisplay = ({ configKey }) => {
       });
     });
 
-    // Add status if present in fields
-    if (allFields.some((f) => f.name === "status")) {
+    // Add status if present in fields AND not already in displayFields
+    const hasStatusInDisplay = displayFields.some((f) => f.name === "status");
+    if (!hasStatusInDisplay && allFields.some((f) => f.name === "status")) {
       cols.push({ key: "status", title: "Status", width: "80px" });
     }
 
@@ -69,7 +48,7 @@ export const DynamicMasterDisplay = ({ configKey }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const result = await getMasters(apiName);
+      const result = await getAllMasters(tableName);
       setData(safeArray(result));
     } catch (error) {
       console.error(`Error loading ${title}:`, error);
@@ -83,7 +62,7 @@ export const DynamicMasterDisplay = ({ configKey }) => {
     if (hasFetched.current) return;
     hasFetched.current = true;
     loadData();
-  }, [apiName]);
+  }, [tableName]);
 
   const handleDelete = async (row) => {
     if (!window.confirm(`Are you sure you want to delete this ${title.toLowerCase()}?`)) return;
@@ -119,4 +98,3 @@ export const DynamicMasterDisplay = ({ configKey }) => {
 };
 
 export default DynamicMasterDisplay;
-

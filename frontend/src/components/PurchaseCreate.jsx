@@ -67,7 +67,11 @@ const totalsData = calculateTotals(rows, formData.tax_type, formData.tax_percent
 const handleRowChange = useCallback((index, key, value) => {
     setRows(prevRows => {
       const newRows = [...prevRows];
-      newRows[index] = { ...newRows[index], [key]: value };
+      if (key === '__batch__' && typeof value === 'object') {
+        newRows[index] = { ...newRows[index], ...value };
+      } else {
+        newRows[index] = { ...newRows[index], [key]: value };
+      }
       return newRows;
     });
   }, []);

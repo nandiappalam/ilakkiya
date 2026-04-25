@@ -1,8 +1,11 @@
 const isTauri = typeof window !== "undefined" && window.__TAURI__;
 
-const BASE_URL = isTauri
+const RAW_BASE_URL = isTauri
   ? "http://localhost:5000"
   : import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+// ✅ Defensive: strip trailing /api if incorrectly set in .env
+const BASE_URL = RAW_BASE_URL.replace(/\/api\/?$/, "");
 
 // ✅ BASE_URL must NOT include /api — it is added per-request below
 export async function api(endpoint, options = {}) {
@@ -100,4 +103,3 @@ export default {
   getPapadCompanies,
   getNextLot
 };
-
