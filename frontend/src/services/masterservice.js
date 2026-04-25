@@ -51,11 +51,15 @@ export const createMaster = async (table, data) => {
 
 export const updateMaster = async (table, id, data) => {
   const result = await api(`/masters/${table}/${id}`, 'PUT', data);
-  if (!result || !result.success) {
-    console.error("❌ Update failed");
-    return false;
+  if (!result) {
+    console.error("❌ Update failed — no response");
+    return { success: false, message: 'No response from server' };
   }
-  return true;
+  if (!result.success) {
+    console.error("❌ Update failed:", result.message || result.error);
+    return { success: false, message: result.message || result.error || 'Update failed' };
+  }
+  return result;
 }
 
 export const deleteMaster = async (table, id) => {

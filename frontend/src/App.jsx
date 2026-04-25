@@ -256,46 +256,46 @@ const AppLayout = () => {
           <Route path="/entry/vehicle-movement-create" element={<VehicleCreate />} />
           <Route path="/entry/vehicle-movement-display" element={<VehicleList />} />
 
-          {/* Master Routes */}
-          <Route path="/master/item-create" element={<ItemCreate />} />
-          <Route path="/master/item-display" element={<ItemDisplay />} />
-          <Route path="/master/item-group-create" element={<ItemGroupCreate />} />
-          <Route path="/master/item-group-display" element={<ItemGroupDisplay />} />
-          <Route path="/master/customer-create" element={<CustomerCreate />} />
-          <Route path="/master/customer-display" element={<CustomerDisplay />} />
-          <Route path="/master/area-create" element={<AreaCreate />} />
-          <Route path="/master/area-display" element={<AreaDisplay />} />
-          <Route path="/master/city-create" element={<CityCreate />} />
-          <Route path="/master/city-display" element={<CityDisplay />} />
-          <Route path="/master/ledger-create" element={<LedgerCreate />} />
-          <Route path="/master/ledger-display" element={<LedgerDisplay />} />
-          <Route path="/master/consignee-create" element={<ConsigneeCreate />} />
-          <Route path="/master/consignee-display" element={<ConsigneeDisplay />} />
-          <Route path="/master/p-trans-create" element={<PTransCreate />} />
-          <Route path="/master/p-trans-display" element={<PTransDisplay />} />
-          <Route path="/master/deduction-purchase-create" element={<DeductionPurchaseCreate />} />
-          <Route path="/master/deduction-purchase-display" element={<DeductionPurchaseDisplay />} />
-          <Route path="/master/deduction-sales-create" element={<DeductionSalesCreate />} />
-          <Route path="/master/deduction-sales-display" element={<DeductionSalesDisplay />} />
-          <Route path="/master/flour-mill-create" element={<FlourMillCreate />} />
-          <Route path="/master/flour-mill-display" element={<FlourMillDisplay />} />
-          <Route path="/master/papad-company-create" element={<PapadCompanyCreate />} />
-          <Route path="/master/papad-company-display" element={<PapadCompanyDisplay />} />
-          <Route path="/master/weight-create" element={<WeightCreate />} />
-          <Route path="/master/weight-display" element={<WeightDisplay />} />
-          <Route path="/master/ledger-group-create" element={<LedgerGroupCreate />} />
-          <Route path="/master/ledger-group-display" element={<LedgerGroupDisplay />} />
-          <Route path="/master/sender-create" element={<SenderCreate />} />
-          <Route path="/master/sender-display" element={<SenderDisplay />} />
-          <Route path="/master/transport-create" element={<TransportCreate />} />
-          <Route path="/master/transport-display" element={<TransportDisplay />} />
-          <Route path="/master/godown-create" element={<GodownCreate />} />
-          <Route path="/master/godown-display" element={<GodownDisplay />} />
+          {/* Master Routes — All routed through dynamic config-driven components */}
+          <Route path="/master/item-create" element={<DynamicMasterForm configKey="item" />} />
+          <Route path="/master/item-display" element={<DynamicMasterDisplay configKey="item" />} />
+          <Route path="/master/item-group-create" element={<DynamicMasterForm configKey="item_group" />} />
+          <Route path="/master/item-group-display" element={<DynamicMasterDisplay configKey="item_group" />} />
+          <Route path="/master/customer-create" element={<DynamicMasterForm configKey="customer" />} />
+          <Route path="/master/customer-display" element={<DynamicMasterDisplay configKey="customer" />} />
+          <Route path="/master/area-create" element={<DynamicMasterForm configKey="area" />} />
+          <Route path="/master/area-display" element={<DynamicMasterDisplay configKey="area" />} />
+          <Route path="/master/city-create" element={<DynamicMasterForm configKey="city" />} />
+          <Route path="/master/city-display" element={<DynamicMasterDisplay configKey="city" />} />
+          <Route path="/master/ledger-create" element={<DynamicMasterForm configKey="ledger" />} />
+          <Route path="/master/ledger-display" element={<DynamicMasterDisplay configKey="ledger" />} />
+          <Route path="/master/consignee-create" element={<DynamicMasterForm configKey="consignee" />} />
+          <Route path="/master/consignee-display" element={<DynamicMasterDisplay configKey="consignee" />} />
+          <Route path="/master/p-trans-create" element={<DynamicMasterForm configKey="p_trans" />} />
+          <Route path="/master/p-trans-display" element={<DynamicMasterDisplay configKey="p_trans" />} />
+          <Route path="/master/deduction-purchase-create" element={<DynamicMasterForm configKey="deduction_purchase" />} />
+          <Route path="/master/deduction-purchase-display" element={<DynamicMasterDisplay configKey="deduction_purchase" />} />
+          <Route path="/master/deduction-sales-create" element={<DynamicMasterForm configKey="deduction_sales" />} />
+          <Route path="/master/deduction-sales-display" element={<DynamicMasterDisplay configKey="deduction_sales" />} />
+          <Route path="/master/flour-mill-create" element={<DynamicMasterForm configKey="flour_mill" />} />
+          <Route path="/master/flour-mill-display" element={<DynamicMasterDisplay configKey="flour_mill" />} />
+          <Route path="/master/papad-company-create" element={<DynamicMasterForm configKey="papad_company" />} />
+          <Route path="/master/papad-company-display" element={<DynamicMasterDisplay configKey="papad_company" />} />
+          <Route path="/master/weight-create" element={<DynamicMasterForm configKey="weight" />} />
+          <Route path="/master/weight-display" element={<DynamicMasterDisplay configKey="weight" />} />
+          <Route path="/master/ledger-group-create" element={<DynamicMasterForm configKey="ledger_group" />} />
+          <Route path="/master/ledger-group-display" element={<DynamicMasterDisplay configKey="ledger_group" />} />
+          <Route path="/master/sender-create" element={<DynamicMasterForm configKey="sender" />} />
+          <Route path="/master/sender-display" element={<DynamicMasterDisplay configKey="sender" />} />
+          <Route path="/master/transport-create" element={<DynamicMasterForm configKey="transport" />} />
+          <Route path="/master/transport-display" element={<DynamicMasterDisplay configKey="transport" />} />
+          <Route path="/master/godown-create" element={<DynamicMasterForm configKey="godown" />} />
+          <Route path="/master/godown-display" element={<DynamicMasterDisplay configKey="godown" />} />
 
           <Route path="/master/company-display" element={<CompanyDisplay />} />
 
-          <Route path="/master/suppliers-create" element={<SupplierCreate />} />
-          <Route path="/master/suppliers-display" element={<SupplierDisplay />} />
+          <Route path="/master/suppliers-create" element={<DynamicMasterForm configKey="supplier" />} />
+          <Route path="/master/suppliers-display" element={<DynamicMasterDisplay configKey="supplier" />} />
 
           {/* Dynamic Master Routes (config-driven) */}
           <Route path="/master/:module/create" element={<ModuleFormRoute />} />

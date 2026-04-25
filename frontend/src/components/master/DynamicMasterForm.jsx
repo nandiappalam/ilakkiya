@@ -61,6 +61,37 @@ export const DynamicMasterForm = ({ configKey }) => {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
 
+  // Auto-generate readonly code fields in creation mode
+  useEffect(() => {
+    if (editId) return; // Only for creation
+
+    const codeField = allFields.find((f) => f.readonly && f.name.includes("_code"));
+    if (!codeField) return;
+
+    const generateCode = (prefix, count) => {
+      return `${prefix}${String(count + 1).padStart(3, "0")}`;
+    };
+
+    const prefixes = {
+      item: "ITM",
+      item_group: "GRP",
+    };
+
+    const prefix = prefixes[configKey];
+    if (!prefix) return;
+
+    const apiName = API_NAME_MAP[configKey] || configKey;
+    api(`/masters/${apiName}`).then((res) => {
+      const count = Array.isArray(res?.data)
+        ? res.data.length
+        : Array.isArray(res)
+        ? res.length
+        : 0;
+      const nextCode = generateCode(prefix, count);
+      setFormData((prev) => ({ ...prev, [codeField.name]: nextCode }));
+    });
+  }, [editId, configKey, allFields]);
+
   // Load existing record for edit mode
   useEffect(() => {
     if (!editId || !config.table) return;
@@ -119,7 +150,8 @@ export const DynamicMasterForm = ({ configKey }) => {
         }
         setTimeout(() => setMessage(""), 3000);
       } else {
-        setMessage("Error: " + (result?.message || "Unknown error"));
+        const errMsg = result?.message || result?.error || "Unknown error";
+        setMessage("Error: " + errMsg);
         setMessageType("error");
       }
     } catch (error) {

@@ -96,7 +96,7 @@ const masterTypeAliases = {
 const masterTables = {
   item_master: {
     table: 'item_master',
-    fields: ['item_code', 'item_name', 'print_name', 'item_group', 'type', 'tax', 'hsn_code', 'ed_percent', 'status'],
+    fields: ['item_code', 'item_name', 'print_name', 'item_group', 'tax', 'hsn_code', 'status'],
     uniqueField: 'item_code'
   },
 

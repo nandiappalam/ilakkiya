@@ -448,7 +448,6 @@ export const MASTER_CONFIG = {
         title: 'Classification',
         fields: [
           { name: 'item_group', label: 'Item Group', type: 'masterSelect', masterType: 'item_groups' },
-          { name: 'type', label: 'Type', type: 'text' },
         ]
       },
       {
@@ -456,7 +455,6 @@ export const MASTER_CONFIG = {
         fields: [
           { name: 'tax', label: 'Tax %', type: 'number' },
           { name: 'hsn_code', label: 'HSN Code', type: 'text' },
-          { name: 'ed_percent', label: 'ED %', type: 'number' },
         ]
       },
       {
