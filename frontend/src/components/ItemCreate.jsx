@@ -54,7 +54,7 @@ const ItemCreate = () => {
     setLoading(true);
     setMessage('');
     try {
-      const result = await api('/masters/item_master', 'POST', formData);
+      const result = await api('/masters/item_master', { method: 'POST', body: formData });
 
       if (!result) {
         console.error("❌ API failed (null response)");

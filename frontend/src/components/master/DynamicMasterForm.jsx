@@ -75,6 +75,7 @@ export const DynamicMasterForm = ({ configKey }) => {
     const prefixes = {
       item: "ITM",
       item_group: "GRP",
+      deduction_purchase: "DP",
     };
 
     const prefix = prefixes[configKey];

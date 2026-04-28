@@ -38,7 +38,7 @@ export const getAllMasters = async (table) => {
 };
 
 export const createMaster = async (table, data) => {
-  const result = await api(`/masters/${table}`, 'POST', data);
+  const result = await api(`/masters/${table}`, { method: 'POST', body: data });
   if (!result) {
     console.error("❌ Create failed");
     return null;
@@ -46,11 +46,11 @@ export const createMaster = async (table, data) => {
   if (result.success) {
     return result;
   }
-  return null;
+  return result; // Return the error response so caller can read result.error
 }
 
 export const updateMaster = async (table, id, data) => {
-  const result = await api(`/masters/${table}/${id}`, 'PUT', data);
+  const result = await api(`/masters/${table}/${id}`, { method: 'PUT', body: data });
   if (!result) {
     console.error("❌ Update failed — no response");
     return { success: false, message: 'No response from server' };
@@ -63,10 +63,11 @@ export const updateMaster = async (table, id, data) => {
 }
 
 export const deleteMaster = async (table, id) => {
-  const result = await api(`/masters/${table}/${id}`, 'DELETE');
+  const result = await api(`/masters/${table}/${id}`, { method: 'DELETE' });
   if (!result || !result.success) {
     console.error("❌ Delete failed");
     return false;
   }
   return true;
 }
+

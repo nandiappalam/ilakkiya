@@ -13,10 +13,11 @@ export const SmartField = ({
   const [loading, setLoading] = useState(false);
 
   const fieldType = field.type || FIELD_TYPES[field.name] || 'text';
-  const isMaster = field.masterType || MASTER_FIELD_TYPES[field.name];
+  const resolvedMasterType = field.masterType || MASTER_FIELD_TYPES[field.name];
+  const isMaster = typeof resolvedMasterType === 'string' ? resolvedMasterType : null;
   const isSelect = fieldType === 'select' || fieldType === 'masterSelect' || !!isMaster;
   const isReadonly = field.readonly || false;
-  const finalValue = value !== undefined ? value : field.defaultValue || '';
+  const finalValue = value !== undefined && value !== null ? value : (field.defaultValue !== undefined ? field.defaultValue : '');
 
   useEffect(() => {
     const loadData = async () => {
@@ -24,7 +25,6 @@ export const SmartField = ({
         if (!isMaster || isReadonly) return;
         setLoading(true);
 
-        // ✅ STATIC DROPDOWN (like statuses)
         if (Array.isArray(MASTER_FIELD_TYPES[isMaster])) {
           const staticOptions = MASTER_FIELD_TYPES[isMaster].map((val) => ({
             id: val,
@@ -32,10 +32,9 @@ export const SmartField = ({
           }));
           setOptions(staticOptions);
           setLoading(false);
-          return; // 🚨 CRITICAL: Skip API call
+          return;
         }
 
-        // ✅ DYNAMIC (API call)
         const data = await getMasters(isMaster === 'item' ? 'items' : isMaster);
         setOptions(safeArray(data));
       } catch (err) {
@@ -86,13 +85,12 @@ export const SmartField = ({
       ) : isSelect ? (
         <select {...inputProps}>
           <option value="">Select {labelText}</option>
-          {safeArray(field.options || options).map(opt => {
-            // Handle both string arrays ['Active'] and object arrays [{label, value}]
+          {safeArray(field.options || options).map((opt, index) => {
             const isString = typeof opt === 'string';
-            const optValue = isString ? opt : (opt.value || opt.id || '');
+            const optValue = isString ? opt : (field.masterType ? (opt.name || opt.id || '') : (opt.value || opt.id || ''));
             const optLabel = isString ? opt : (opt.label || opt.name || opt.value || opt.id || '');
             return (
-              <option key={optValue} value={optValue}>
+              <option key={`${optValue}-${index}`} value={optValue}>
                 {optLabel}
               </option>
             );

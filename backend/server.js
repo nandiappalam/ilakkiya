@@ -7,13 +7,45 @@ const fs = require('fs')
 const db = require('./config/database')
 
 const app = express()
-// Use PORT 3000 for development mode
-// For Tauri embedded mode, this can be changed to 0
+// Render uses PORT env; default to 5000 to match Vite proxy
 const PORT = process.env.PORT || 5000
 let actualPort = PORT
 
-// Middleware
-app.use(cors())
+// Process-level crash protection (prevents 502s from uncaught errors)
+process.on('uncaughtException', (err) => {
+  console.error('🔥 UNCAUGHT EXCEPTION:', err.stack || err)
+})
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🔥 UNHANDLED REJECTION at:', promise, 'reason:', reason)
+})
+
+// CORS configuration
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'https://bvc-inventory-ilakkiya.onrender.com',
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.onrender.com')) {
+      return callback(null, true);
+    }
+    callback(null, true); // permissive during development
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+}));
+
+// Explicitly handle OPTIONS preflight for all routes
+app.options('*', cors());
+
 app.use(express.json())
 const frontendPath = path.join(__dirname, '../frontend/dist')
 
@@ -62,6 +94,7 @@ const companiesRouter = require('./routes/companies')
 const authRouter = require('./routes/auth')
 const dbRouter = require('./routes/db')
 const vehicleMovementsRouter = require('./routes/vehicle-movements')
+const papadCompaniesRouter = require('./routes/papadCompanies')
 
 app.use('/api/purchases', purchasesRouter)
 app.use('/api/purchase-returns', purchaseReturnsRouter)
@@ -94,6 +127,7 @@ app.use('/api/auth', authRouter)
 app.use('/api/vouchers', require('./routes/vouchers'))
 app.use('/api/db', dbRouter)
 app.use('/api/vehicle-movements', vehicleMovementsRouter)
+app.use('/api/papad-companies', papadCompaniesRouter)
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -142,10 +176,14 @@ app.get('*', (req, res) => {
 
  // res.send('Frontend not built. API is running.');
 
-// Error handling middleware
+// Global error handling middleware (catches all unhandled route errors)
 app.use((err, req, res, next) => {
-  console.error(err.stack)
-  res.status(500).json({ message: 'Something went wrong!' })
+  console.error('🔥 GLOBAL ERROR HANDLER:', err.stack || err)
+  res.status(err.status || 500).json({
+    success: false,
+    error: err.message || 'Internal Server Error',
+    path: req.path
+  })
 })
 
 // Initialize master tables on startup
@@ -161,6 +199,7 @@ async function initializeMasterTables() {
         item_name TEXT,
         print_name TEXT,
         item_group TEXT,
+        type TEXT,
         tax REAL DEFAULT 0,
         hsn_code TEXT,
         status TEXT DEFAULT 'Active'
@@ -184,16 +223,17 @@ async function initializeMasterTables() {
         print_name TEXT,
         contact_person TEXT,
         address1 TEXT,
-        address2 TEXT,
-        address3 TEXT,
-        address4 TEXT,
-        gst_number TEXT,
-        phone_off TEXT,
         phone_res TEXT,
+        phone_off TEXT,
         mobile1 TEXT,
-        mobile2 TEXT,
+        email TEXT,
+        gst_number TEXT,
         area TEXT,
+        transport TEXT,
+        limit_days INTEGER,
+        limit_amount REAL,
         opening_balance REAL DEFAULT 0,
+        balance_type TEXT DEFAULT 'Dr',
         status TEXT DEFAULT 'Active'
       )`
     },
@@ -205,16 +245,17 @@ async function initializeMasterTables() {
         print_name TEXT,
         contact_person TEXT,
         address1 TEXT,
-        address2 TEXT,
-        address3 TEXT,
-        address4 TEXT,
-        gst_number TEXT,
-        phone_off TEXT,
         phone_res TEXT,
+        phone_off TEXT,
         mobile1 TEXT,
-        mobile2 TEXT,
+        email TEXT,
+        gst_number TEXT,
         area TEXT,
+        transport TEXT,
+        limit_days INTEGER,
+        limit_amount REAL,
         opening_balance REAL DEFAULT 0,
+        balance_type TEXT DEFAULT 'Dr',
         status TEXT DEFAULT 'Active'
       )`
     },
@@ -269,11 +310,11 @@ async function initializeMasterTables() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE,
         printname TEXT,
+        alias_name TEXT,
         under TEXT,
         openingbalance REAL DEFAULT 0,
-        area TEXT,
-        credit REAL DEFAULT 0,
-        debit REAL DEFAULT 0,
+        opening_type TEXT DEFAULT 'Dr',
+        ledger_type TEXT DEFAULT 'General',
         status TEXT DEFAULT 'Active'
       )`
     },
@@ -299,11 +340,13 @@ async function initializeMasterTables() {
         ded_code TEXT UNIQUE,
         ded_name TEXT,
         print_name TEXT,
-        debit_adjust TEXT,
+        affect_cost_of_goods TEXT DEFAULT 'No',
+        type TEXT DEFAULT 'Add',
+        debit_side_adjust TEXT DEFAULT 'None',
         account_head TEXT,
         credit_adjust TEXT,
-        ded_type TEXT,
-        calc_type TEXT,
+        deduction_type TEXT DEFAULT 'Add',
+        calculation_type TEXT DEFAULT 'Percentage',
         status TEXT DEFAULT 'Active'
       )`
     },
@@ -400,6 +443,10 @@ async function initializeMasterTables() {
         godown_name TEXT UNIQUE,
         print_name TEXT,
         location TEXT,
+        contact_person TEXT,
+        address TEXT,
+        phone_off TEXT,
+        area TEXT,
         status TEXT DEFAULT 'Active'
       )`
     },
@@ -453,7 +500,10 @@ async function initializeMasterTables() {
       console.log(`✗ Error creating table '${table.name}':`, error.message)
     }
   }
-  
+
+  // Auto-migrations: safely add columns that may be missing in older DBs
+  await require('./autoMigrate')()
+
   // Verify tables
   try {
     const result = await db.query("SELECT name FROM sqlite_master WHERE type='table'")
@@ -474,4 +524,3 @@ app.listen(PORT, '0.0.0.0', async () => {
 })
 
 module.exports = app
-

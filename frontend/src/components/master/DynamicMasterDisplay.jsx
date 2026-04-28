@@ -12,7 +12,7 @@ export const DynamicMasterDisplay = ({ configKey }) => {
   const title = config.title || configKey.replace(/_/g, " ").toUpperCase();
   const tableName = config.table || configKey;
 
-  // Auto-generate columns from first section fields (up to 6) + status
+  // Auto-generate columns from first section fields (up to 8) + status
   const columns = React.useMemo(() => {
     const cols = [{ key: "sno", title: "S.No", width: "50px", render: (_, __, index) => index + 1 }];
 
@@ -23,8 +23,8 @@ export const DynamicMasterDisplay = ({ configKey }) => {
       });
     });
 
-    // Take first 6 visible fields
-    const displayFields = allFields.filter((f) => !f.hidden).slice(0, 6);
+    // Take first 8 visible fields
+    const displayFields = allFields.filter((f) => !f.hidden).slice(0, 8);
     displayFields.forEach((field) => {
       cols.push({
         key: field.name,
@@ -69,7 +69,7 @@ export const DynamicMasterDisplay = ({ configKey }) => {
 
     try {
       const result = await deleteMaster(config.table, row.id);
-      if (result && result.success) {
+      if (result === true) {
         alert(`${title} deleted successfully`);
         loadData();
       } else {
@@ -82,7 +82,8 @@ export const DynamicMasterDisplay = ({ configKey }) => {
   };
 
   const handleEdit = (row) => {
-    navigate(`/master/${configKey}/create?edit=${row.id}`);
+    const routeKey = configKey.replace(/_/g, '-');
+    navigate(`/master/${routeKey}-create?edit=${row.id}`);
   };
 
   return (

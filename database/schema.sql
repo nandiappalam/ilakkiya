@@ -276,7 +276,8 @@ CREATE TABLE IF NOT EXISTS item_groups (
     group_code TEXT UNIQUE,
     group_name TEXT,
     print_name TEXT,
-    tax REAL
+    tax REAL,
+    status TEXT DEFAULT 'Active'
 );
 
 -- Deduction Sales
@@ -298,49 +299,57 @@ CREATE TABLE IF NOT EXISTS deduction_purchase (
     ded_code TEXT UNIQUE,
     ded_name TEXT,
     print_name TEXT,
-    debit_adjust TEXT,
+    affect_cost_of_goods TEXT DEFAULT 'No',
+    type TEXT DEFAULT 'Add',
+    debit_side_adjust TEXT DEFAULT 'None',
     account_head TEXT,
-    credit_adjust TEXT,
-    ded_type TEXT,
-    calc_type TEXT
+    credit_adjust TEXT DEFAULT 'None',
+    deduction_type TEXT DEFAULT 'Add',
+    calculation_type TEXT DEFAULT 'Percentage',
+    deduction_value REAL DEFAULT 0,
+    status TEXT DEFAULT 'Active'
 );
 
 -- Customer Master
 CREATE TABLE IF NOT EXISTS customer_master (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
+    name TEXT UNIQUE,
     print_name TEXT,
     contact_person TEXT,
     address1 TEXT,
-    address2 TEXT,
-    address3 TEXT,
-    address4 TEXT,
-    gst_number TEXT,
-    phone_off TEXT,
     phone_res TEXT,
+    phone_off TEXT,
     mobile1 TEXT,
-    mobile2 TEXT,
+    email TEXT,
+    gst_number TEXT,
     area TEXT,
-    opening_balance REAL
+    transport TEXT,
+    limit_days INTEGER,
+    limit_amount REAL,
+    opening_balance REAL DEFAULT 0,
+    balance_type TEXT DEFAULT 'Dr',
+    status TEXT DEFAULT 'Active'
 );
 
 -- Supplier Master
 CREATE TABLE IF NOT EXISTS supplier_master (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
+    name TEXT UNIQUE,
     print_name TEXT,
     contact_person TEXT,
     address1 TEXT,
-    address2 TEXT,
-    address3 TEXT,
-    address4 TEXT,
-    gst_number TEXT,
-    phone_off TEXT,
     phone_res TEXT,
+    phone_off TEXT,
     mobile1 TEXT,
-    mobile2 TEXT,
+    email TEXT,
+    gst_number TEXT,
     area TEXT,
-    opening_balance REAL
+    transport TEXT,
+    limit_days INTEGER,
+    limit_amount REAL,
+    opening_balance REAL DEFAULT 0,
+    balance_type TEXT DEFAULT 'Dr',
+    status TEXT DEFAULT 'Active'
 );
 
 -- Flour Mill Master
@@ -349,18 +358,16 @@ CREATE TABLE IF NOT EXISTS flour_mill_master (
     flourmill TEXT UNIQUE,
     print_name TEXT,
     contact_person TEXT,
-    address1 TEXT,
-    address2 TEXT,
-    address3 TEXT,
-    address4 TEXT,
-    gst_number TEXT,
-    phone_off TEXT,
-    phone_res TEXT,
-    mobile1 TEXT,
-    mobile2 TEXT,
+    address TEXT,
     area TEXT,
+    phone_res TEXT,
+    phone_off TEXT,
+    mobile TEXT,
+    tin_no TEXT,
     wages_kg REAL,
-    opening_balance REAL
+    opening_balance REAL,
+    opening_balance_type TEXT DEFAULT 'Dr',
+    status TEXT DEFAULT 'Active'
 );
 
 -- Papad Company Master
@@ -417,11 +424,12 @@ CREATE TABLE IF NOT EXISTS ledgermaster (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE,
     printname TEXT,
+    alias_name TEXT,
     under TEXT,
-    openingbalance REAL,
-    area TEXT,
-    credit REAL,
-    debit REAL
+    openingbalance REAL DEFAULT 0,
+    opening_type TEXT DEFAULT 'Dr',
+    ledger_type TEXT DEFAULT 'General',
+    status TEXT DEFAULT 'Active'
 );
 
 -- Sales table
@@ -505,7 +513,14 @@ CREATE TABLE IF NOT EXISTS godown_master (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     godown_name TEXT UNIQUE,
     print_name TEXT,
-    location TEXT,
+    contact_person TEXT,
+    address TEXT,
+    phone_off TEXT,
+    mobile1 TEXT,
+    email TEXT,
+    website TEXT,
+    area TEXT,
+    gst_number TEXT,
     status TEXT DEFAULT 'Active'
 );
 

@@ -45,7 +45,7 @@ const CompanySelection = () => {
   const handleDelete = async (company) => {
     if (window.confirm(`Are you sure you want to delete "${company.name}"?`)) {
       try { 
-        await api(`companies/${company.id}`, 'DELETE');
+        await api(`companies/${company.id}`, { method: 'DELETE' });
         fetchCompanies(); 
       }
       catch (error) { console.error('Error deleting company:', error); alert('Failed to delete company'); }

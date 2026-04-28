@@ -96,7 +96,7 @@ const masterTypeAliases = {
 const masterTables = {
   item_master: {
     table: 'item_master',
-    fields: ['item_code', 'item_name', 'print_name', 'item_group', 'tax', 'hsn_code', 'status'],
+    fields: ['item_code', 'item_name', 'print_name', 'item_group', 'type', 'tax', 'hsn_code', 'status'],
     uniqueField: 'item_code'
   },
 
@@ -112,22 +112,22 @@ const masterTables = {
   },
   deduction_purchase: {
     table: 'deduction_purchase',
-    fields: ['ded_code', 'ded_name', 'print_name', 'debit_adjust', 'account_head', 'credit_adjust', 'ded_type', 'calc_type'],
+    fields: ['ded_code', 'ded_name', 'print_name', 'affect_cost_of_goods', 'type', 'debit_side_adjust', 'account_head', 'credit_adjust', 'deduction_type', 'calculation_type', 'deduction_value', 'status'],
     uniqueField: 'ded_code'
   },
   customer_master: {
     table: 'customer_master',
-    fields: ['name', 'print_name', 'contact_person', 'address1', 'address2', 'address3', 'address4', 'gst_number', 'phone_off', 'phone_res', 'mobile1', 'mobile2', 'area', 'opening_balance'],
+    fields: ['name', 'print_name', 'contact_person', 'address1', 'phone_res', 'phone_off', 'mobile1', 'email', 'gst_number', 'area', 'transport', 'limit_days', 'limit_amount', 'opening_balance', 'balance_type', 'status'],
     uniqueField: 'name'
   },
   supplier_master: {
     table: 'supplier_master',
-    fields: ['name', 'print_name', 'contact_person', 'address1', 'address2', 'address3', 'address4', 'gst_number', 'phone_off', 'phone_res', 'mobile1', 'mobile2', 'area', 'opening_balance'],
+    fields: ['name', 'print_name', 'contact_person', 'address1', 'phone_res', 'phone_off', 'mobile1', 'email', 'gst_number', 'area', 'transport', 'limit_days', 'limit_amount', 'opening_balance', 'balance_type', 'status'],
     uniqueField: 'name'
   },
   flour_mill_master: {
     table: 'flour_mill_master',
-    fields: ['flourmill', 'print_name', 'contact_person', 'address1', 'address2', 'address3', 'address4', 'gst_number', 'phone_off', 'phone_res', 'mobile1', 'mobile2', 'area', 'wages_kg', 'opening_balance', 'status'],
+    fields: ['flourmill', 'print_name', 'contact_person', 'address', 'area', 'phone_res', 'phone_off', 'mobile', 'tin_no', 'wages_kg', 'opening_balance', 'opening_balance_type', 'status'],
     uniqueField: 'flourmill'
   },
   papad_company_master: {
@@ -147,7 +147,7 @@ const masterTables = {
   },
   ledgermaster: {
     table: 'ledgermaster',
-    fields: ['name', 'printname', 'under', 'openingbalance', 'area', 'credit', 'debit'],
+    fields: ['name', 'printname', 'alias_name', 'under', 'openingbalance', 'opening_type', 'ledger_type', 'status'],
     uniqueField: 'name'
   },
   area_master: {
@@ -187,7 +187,7 @@ const masterTables = {
   },
   godown_master: {
     table: 'godown_master',
-    fields: ['godown_name', 'print_name'],
+    fields: ['godown_name', 'print_name', 'contact_person', 'address', 'phone_off', 'mobile1', 'email', 'website', 'area', 'gst_number', 'status'],
     uniqueField: 'godown_name'
   }
 }

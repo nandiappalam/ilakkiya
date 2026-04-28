@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+const fs = require('fs');
+
+const content = `import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MASTER_CONFIG } from '../utils/masterConfig.js';
 import { safeArray } from '../utils/safeArray.js';
@@ -145,9 +147,8 @@ const PapadCompanyCreate = () => {
             Back
           </button>
         </div>
-      </div>
 
-      {message && <div className={`message ${messageType}`}>{message}</div>}
+      {message && <div className={\`message \${messageType}\`}>{message}</div>}
 
       <form onSubmit={handleSubmit} className="papad-form-container">
         {/* Left Panel - Company Details */}
@@ -163,7 +164,6 @@ const PapadCompanyCreate = () => {
               />
             ))}
           </div>
-        </div>
 
         {/* Right Panel - Entry Table */}
         <div className="papad-right-panel">
@@ -241,7 +241,6 @@ const PapadCompanyCreate = () => {
               + Add Row
             </button>
           </div>
-        </div>
       </form>
 
       {/* Footer Actions */}
@@ -253,8 +252,11 @@ const PapadCompanyCreate = () => {
           Cancel
         </button>
       </div>
-    </div>
   );
 };
 
 export default PapadCompanyCreate;
+`;
+
+fs.writeFileSync('frontend/src/components/PapadCompanyCreate.jsx', content);
+console.log('PapadCompanyCreate.jsx fixed successfully');

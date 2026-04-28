@@ -1,20 +1,12 @@
-const isTauri = typeof window !== "undefined" && window.__TAURI__;
-const isDev = import.meta.env.DEV;
+// Environment-aware BASE_URL
+// In dev (Vite) we use relative URLs so the Vite proxy handles routing
+// In production we hit the deployed Render backend directly
+const BASE_URL = import.meta.env.DEV ? "" : "https://bvc-inventory-ilakkiya.onrender.com";
 
-let BASE_URL;
-if (isTauri) {
-   BASE_URL = "http://localhost:5000";
-} else if (isDev) {
-  // Local development — frontend (vite dev server) talks to backend on port 5000
-  const envUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-  BASE_URL = envUrl.replace(/\/api\/?$/, "");
-} else {
-  // Production (Render) — backend serves frontend, use same-origin relative URLs
-  BASE_URL = "";
-}
+console.log("🚀 BASE URL:", BASE_URL || "(relative — using Vite proxy)");
 
 // ✅ BASE_URL must NOT include /api — it is added per-request below
-export async function api(endpoint, method = "GET", body = null) {
+export async function api(endpoint, options = {}) {
   if (!endpoint || typeof endpoint !== "string") {
     console.error("❌ Invalid endpoint:", endpoint);
     return null;
@@ -35,9 +27,12 @@ export async function api(endpoint, method = "GET", body = null) {
 
   try {
     const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: body ? JSON.stringify(body) : null,
+      method: options.method || "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined,
     });
 
     // ✅ Null-safe JSON parse
@@ -48,8 +43,7 @@ export async function api(endpoint, method = "GET", body = null) {
       return { success: false, data: null, message: `HTTP ${res.status}: ${res.statusText}` };
     }
 
-    const data = await res.json();
-    return data;
+    return await res.json();
   } catch (err) {
     console.error("🔥 API FAILED:", err);
     return { success: false, data: null, message: err.message };
@@ -64,3 +58,4 @@ export const getNextLot = () => api(`/masters/lots/next`);
 
 // Export for backward compatibility
 export default api;
+

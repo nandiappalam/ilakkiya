@@ -137,6 +137,12 @@ const [financialYear, setFinancialYear] = useState('2024-2025');
   // Login function
   const login = async (loginData) => {
     try {
+      // Guard against null/invalid login data
+      if (!loginData || typeof loginData !== 'object') {
+        console.error('Login failed: invalid response', loginData);
+        return { success: false, message: 'Invalid login response from server' };
+      }
+
       // Extract data from login response
       const userData = loginData.user || {
         id: loginData.user_id,

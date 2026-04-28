@@ -165,11 +165,10 @@ const AppLayout = () => {
     <>
       <Navigation />
         <Box sx={{
-          pt: '64px',
           width: '100%',
           padding: { xs: 2, sm: 3 },
           boxSizing: 'border-box'
-        }}> 
+        }}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -279,8 +278,9 @@ const AppLayout = () => {
           <Route path="/master/deduction-sales-display" element={<DynamicMasterDisplay configKey="deduction_sales" />} />
           <Route path="/master/flour-mill-create" element={<DynamicMasterForm configKey="flour_mill" />} />
           <Route path="/master/flour-mill-display" element={<DynamicMasterDisplay configKey="flour_mill" />} />
-          <Route path="/master/papad-company-create" element={<DynamicMasterForm configKey="papad_company" />} />
+          <Route path="/master/papad-company-create" element={<PapadCompanyCreate />} />
           <Route path="/master/papad-company-display" element={<DynamicMasterDisplay configKey="papad_company" />} />
+          <Route path="/papad-company-list" element={<DynamicMasterDisplay configKey="papad_company" />} />
           <Route path="/master/weight-create" element={<DynamicMasterForm configKey="weight" />} />
           <Route path="/master/weight-display" element={<DynamicMasterDisplay configKey="weight" />} />
           <Route path="/master/ledger-group-create" element={<DynamicMasterForm configKey="ledger_group" />} />

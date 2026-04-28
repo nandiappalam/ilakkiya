@@ -49,7 +49,7 @@ const AdvanceCreate = () => {
       }
       
       // Use Tauri API instead of fetch
-      const result = await api('/advances', 'POST', postData);
+      const result = await api('/advances', { method: 'POST', body: postData });
       
       if (result && result.success) {
         setMessage('Advance saved successfully')

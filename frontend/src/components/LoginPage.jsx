@@ -66,10 +66,13 @@ const LoginPage = () => {
     try {
       // Use dual-mode API (works in both browser and Tauri)
       // Pass company_id along with username and password
-      const response = await api({
-        username,
-        password,
-        company_id: selectedCompany.id
+      const response = await api('/auth/login', {
+        method: 'POST',
+        body: {
+          username,
+          password,
+          company_id: selectedCompany.id
+        }
       });
       // Update auth context with login data
       setAuthLogin(response);

@@ -108,9 +108,9 @@ const GeneralCompanyCreate = () => {
       
       let result;
       if (isEditMode) {
-        result = await api(`companies/${id}`, 'PUT', payload);
+        result = await api(`companies/${id}`, { method: 'PUT', body: payload });
       } else {
-        result = await api('companies', 'POST', payload);
+        result = await api('companies', { method: 'POST', body: payload });
       }
 
       if (result && !result.error) {

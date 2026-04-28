@@ -1,6 +1,6 @@
 html, body, #root {
-  height: 100%;
-  overflow: auto !important;
+  min-height: 100vh;
+  overflow-y: auto !important;
 }
 
 * {

@@ -7,14 +7,21 @@ export const MASTER_CONFIG = {
         fields: [
           { name: 'name', label: 'Ledger Name', type: 'text', required: true },
           { name: 'printname', label: 'Print Name', type: 'text' },
-          { name: 'under', label: 'Under', type: 'masterSelect', masterType: 'ledger_groups' },
+          { name: 'alias_name', label: 'Alias Name', type: 'text' },
+          { name: 'under', label: 'Group Under', type: 'masterSelect', masterType: 'ledger_groups' },
         ]
       },
       {
-        title: 'Financial Details',
+        title: 'Opening Balance',
         fields: [
           { name: 'openingbalance', label: 'Opening Balance', type: 'number' },
-          { name: 'area', label: 'Area', type: 'masterSelect', masterType: 'area' },
+          { name: 'opening_type', label: 'Opening Type', type: 'select', options: [{ label: 'Dr', value: 'Dr' }, { label: 'Cr', value: 'Cr' }], defaultValue: 'Dr' },
+        ]
+      },
+      {
+        title: 'Ledger Type',
+        fields: [
+          { name: 'ledger_type', label: 'Ledger Type', type: 'select', options: [{ label: 'Supplier', value: 'Supplier' }, { label: 'Customer', value: 'Customer' }, { label: 'General', value: 'General' }], defaultValue: 'General' },
         ]
       },
       {
@@ -33,6 +40,7 @@ export const MASTER_CONFIG = {
         fields: [
           { name: 'name', label: 'Group Name', type: 'text', required: true },
           { name: 'printname', label: 'Print Name', type: 'text' },
+          { name: 'under', label: 'Group Under', type: 'masterSelect', masterType: 'ledger_groups' },
         ]
       },
       {
@@ -131,13 +139,13 @@ export const MASTER_CONFIG = {
           { name: 'contact_person', label: 'Contact Person', type: 'text' },
           { name: 'phone_res', label: 'Phone (Res)', type: 'text' },
           { name: 'phone_off', label: 'Phone (Off)', type: 'text' },
-          { name: 'mobile', label: 'Mobile', type: 'text' },
+          { name: 'mobile1', label: 'Mobile', type: 'text' },
         ]
       },
       {
         title: 'Address',
         fields: [
-          { name: 'address', label: 'Address', type: 'textarea' },
+          { name: 'address1', label: 'Address', type: 'textarea' },
           { name: 'area', label: 'Area', type: 'masterSelect', masterType: 'area' },
         ]
       },
@@ -171,13 +179,13 @@ export const MASTER_CONFIG = {
           { name: 'contact_person', label: 'Contact Person', type: 'text' },
           { name: 'phone_res', label: 'Phone (Res)', type: 'text' },
           { name: 'phone_off', label: 'Phone (Off)', type: 'text' },
-          { name: 'mobile', label: 'Mobile', type: 'text' },
+          { name: 'mobile1', label: 'Mobile', type: 'text' },
         ]
       },
       {
         title: 'Address',
         fields: [
-          { name: 'address', label: 'Address', type: 'textarea' },
+          { name: 'address1', label: 'Address', type: 'textarea' },
           { name: 'area', label: 'Area', type: 'masterSelect', masterType: 'area' },
         ]
       },
@@ -206,6 +214,24 @@ export const MASTER_CONFIG = {
         ]
       },
       {
+        title: 'Contact & Address',
+        fields: [
+          { name: 'contact_person', label: 'Contact Person', type: 'text' },
+          { name: 'address1', label: 'Address', type: 'textarea' },
+          { name: 'phone_off', label: 'Phone (Off)', type: 'text' },
+          { name: 'mobile1', label: 'Mobile', type: 'text' },
+          { name: 'email', label: 'Email', type: 'email' },
+          { name: 'website', label: 'Web', type: 'text' },
+          { name: 'area', label: 'Area', type: 'masterSelect', masterType: 'area' },
+        ]
+      },
+      {
+        title: 'Tax',
+        fields: [
+          { name: 'gst_number', label: 'GST No', type: 'text' },
+        ]
+      },
+      {
         title: 'Status',
         fields: [
           { name: 'status', label: 'Status', type: 'select', options: [{ label: 'Active', value: 'Active' }, { label: 'Inactive', value: 'Inactive' }], defaultValue: 'Active' }
@@ -219,7 +245,7 @@ export const MASTER_CONFIG = {
       {
         title: 'Basic Information',
         fields: [
-          { name: 'name', label: 'Name', type: 'text', required: true },
+          { name: 'name', label: 'Customer Name', type: 'text', required: true },
           { name: 'print_name', label: 'Print Name', type: 'text' },
           { name: 'contact_person', label: 'Contact Person', type: 'text' },
         ]
@@ -227,27 +253,28 @@ export const MASTER_CONFIG = {
       {
         title: 'Address',
         fields: [
-          { name: 'address1', label: 'Address Line 1', type: 'text' },
-          { name: 'address2', label: 'Address Line 2', type: 'text' },
-          { name: 'address3', label: 'Address Line 3', type: 'text' },
-          { name: 'address4', label: 'Address Line 4', type: 'text' },
+          { name: 'address1', label: 'Address', type: 'textarea' },
           { name: 'area', label: 'Area', type: 'masterSelect', masterType: 'area' },
         ]
       },
       {
         title: 'Contact',
         fields: [
-          { name: 'phone_off', label: 'Phone (Off)', type: 'text' },
           { name: 'phone_res', label: 'Phone (Res)', type: 'text' },
-          { name: 'mobile1', label: 'Mobile 1', type: 'text' },
-          { name: 'mobile2', label: 'Mobile 2', type: 'text' },
+          { name: 'phone_off', label: 'Phone (Off)', type: 'text' },
+          { name: 'mobile1', label: 'Mobile', type: 'text' },
+          { name: 'email', label: 'Email', type: 'email' },
         ]
       },
       {
         title: 'Tax & Financial',
         fields: [
           { name: 'gst_number', label: 'GST Number', type: 'text' },
+          { name: 'transport', label: 'Transport', type: 'masterSelect', masterType: 'transports' },
+          { name: 'limit_days', label: 'Limit Days', type: 'number' },
+          { name: 'limit_amount', label: 'Limit Amount', type: 'number' },
           { name: 'opening_balance', label: 'Opening Balance', type: 'number' },
+          { name: 'balance_type', label: 'Balance Type', type: 'select', options: [{ label: 'Dr', value: 'Dr' }, { label: 'Cr', value: 'Cr' }], defaultValue: 'Dr' },
         ]
       },
       {
@@ -264,7 +291,7 @@ export const MASTER_CONFIG = {
       {
         title: 'Basic Information',
         fields: [
-          { name: 'name', label: 'Name', type: 'text', required: true },
+          { name: 'name', label: 'Supplier Name', type: 'text', required: true },
           { name: 'print_name', label: 'Print Name', type: 'text' },
           { name: 'contact_person', label: 'Contact Person', type: 'text' },
         ]
@@ -272,27 +299,28 @@ export const MASTER_CONFIG = {
       {
         title: 'Address',
         fields: [
-          { name: 'address1', label: 'Address Line 1', type: 'text' },
-          { name: 'address2', label: 'Address Line 2', type: 'text' },
-          { name: 'address3', label: 'Address Line 3', type: 'text' },
-          { name: 'address4', label: 'Address Line 4', type: 'text' },
+          { name: 'address1', label: 'Address', type: 'textarea' },
           { name: 'area', label: 'Area', type: 'masterSelect', masterType: 'area' },
         ]
       },
       {
         title: 'Contact',
         fields: [
-          { name: 'phone_off', label: 'Phone (Off)', type: 'text' },
           { name: 'phone_res', label: 'Phone (Res)', type: 'text' },
-          { name: 'mobile1', label: 'Mobile 1', type: 'text' },
-          { name: 'mobile2', label: 'Mobile 2', type: 'text' },
+          { name: 'phone_off', label: 'Phone (Off)', type: 'text' },
+          { name: 'mobile1', label: 'Mobile', type: 'text' },
+          { name: 'email', label: 'Email', type: 'email' },
         ]
       },
       {
         title: 'Tax & Financial',
         fields: [
           { name: 'gst_number', label: 'GST Number', type: 'text' },
+          { name: 'transport', label: 'Transport', type: 'masterSelect', masterType: 'transports' },
+          { name: 'limit_days', label: 'Limit Days', type: 'number' },
+          { name: 'limit_amount', label: 'Limit Amount', type: 'number' },
           { name: 'opening_balance', label: 'Opening Balance', type: 'number' },
+          { name: 'balance_type', label: 'Balance Type', type: 'select', options: [{ label: 'Dr', value: 'Dr' }, { label: 'Cr', value: 'Cr' }], defaultValue: 'Dr' },
         ]
       },
       {
@@ -317,28 +345,25 @@ export const MASTER_CONFIG = {
       {
         title: 'Address',
         fields: [
-          { name: 'address1', label: 'Address Line 1', type: 'text' },
-          { name: 'address2', label: 'Address Line 2', type: 'text' },
-          { name: 'address3', label: 'Address Line 3', type: 'text' },
-          { name: 'address4', label: 'Address Line 4', type: 'text' },
+          { name: 'address1', label: 'Address', type: 'textarea' },
           { name: 'area', label: 'Area', type: 'masterSelect', masterType: 'area' },
         ]
       },
       {
         title: 'Contact',
         fields: [
-          { name: 'phone_off', label: 'Phone (Off)', type: 'text' },
           { name: 'phone_res', label: 'Phone (Res)', type: 'text' },
-          { name: 'mobile1', label: 'Mobile 1', type: 'text' },
-          { name: 'mobile2', label: 'Mobile 2', type: 'text' },
+          { name: 'phone_off', label: 'Phone (Off)', type: 'text' },
+          { name: 'mobile1', label: 'Mobile', type: 'text' },
         ]
       },
       {
         title: 'Tax & Financial',
         fields: [
-          { name: 'gst_number', label: 'GST Number', type: 'text' },
+          { name: 'tin_no', label: 'TIN No', type: 'text' },
           { name: 'wages_kg', label: 'Wages per Kg', type: 'number' },
           { name: 'opening_balance', label: 'Opening Balance', type: 'number' },
+          { name: 'opening_balance_type', label: 'Opening Balance Type', type: 'select', options: [{ label: 'Dr', value: 'Dr' }, { label: 'Cr', value: 'Cr' }], defaultValue: 'Dr' },
         ]
       },
       {
@@ -363,11 +388,8 @@ export const MASTER_CONFIG = {
       {
         title: 'Address',
         fields: [
-          { name: 'address1', label: 'Address Line 1', type: 'text' },
-          { name: 'address2', label: 'Address Line 2', type: 'text' },
-          { name: 'address3', label: 'Address Line 3', type: 'text' },
-          { name: 'address4', label: 'Address Line 4', type: 'text' },
-          { name: 'area', label: 'Area', type: 'masterSelect', masterType: 'area' },
+          { name: 'address1', label: 'Address', type: 'textarea' },
+          { name: 'area', label: 'Area', type: 'text' },
         ]
       },
       {
@@ -375,17 +397,15 @@ export const MASTER_CONFIG = {
         fields: [
           { name: 'phone_off', label: 'Phone (Off)', type: 'text' },
           { name: 'phone_res', label: 'Phone (Res)', type: 'text' },
-          { name: 'mobile1', label: 'Mobile 1', type: 'text' },
-          { name: 'mobile2', label: 'Mobile 2', type: 'text' },
+          { name: 'mobile1', label: 'Mobile', type: 'text' },
+          { name: 'email', label: 'Email', type: 'email' },
         ]
       },
       {
-        title: 'Tax & Financial',
+        title: 'Financial',
         fields: [
-          { name: 'gst_no', label: 'GST Number', type: 'text' },
-          { name: 'wages_kg', label: 'Wages per Kg', type: 'number' },
-          { name: 'opening_balance', label: 'Opening Balance', type: 'number' },
-          { name: 'opening_advance', label: 'Opening Advance', type: 'number' },
+          { name: 'opening_advance', label: 'Opening Advance', type: 'number', defaultValue: 0 },
+          { name: 'opening_balance', label: 'Opening Balance', type: 'number', defaultValue: 0 },
         ]
       },
       {
@@ -430,6 +450,12 @@ export const MASTER_CONFIG = {
         fields: [
           { name: 'tax', label: 'Tax %', type: 'number' },
         ]
+      },
+      {
+        title: 'Status',
+        fields: [
+          { name: 'status', label: 'Status', type: 'select', options: [{ label: 'Active', value: 'Active' }, { label: 'Inactive', value: 'Inactive' }], defaultValue: 'Active' }
+        ]
       }
     ]
   },
@@ -448,6 +474,7 @@ export const MASTER_CONFIG = {
         title: 'Classification',
         fields: [
           { name: 'item_group', label: 'Item Group', type: 'masterSelect', masterType: 'item_groups' },
+          { name: 'type', label: 'Type', type: 'select', options: [{ label: 'Urad', value: 'Urad' }, { label: 'Rice', value: 'Rice' }, { label: 'Flour', value: 'Flour' }, { label: 'Suji', value: 'Suji' }], defaultValue: 'Urad' },
         ]
       },
       {
@@ -500,24 +527,27 @@ export const MASTER_CONFIG = {
       {
         title: 'Basic Information',
         fields: [
-          { name: 'ded_code', label: 'Deduction Code', type: 'text', required: true },
+          { name: 'ded_code', label: 'Deduction Code', type: 'text', readonly: true, required: true },
           { name: 'ded_name', label: 'Deduction Name', type: 'text', required: true },
           { name: 'print_name', label: 'Print Name', type: 'text' },
         ]
       },
       {
-        title: 'Account Settings',
+        title: 'Settings',
         fields: [
-          { name: 'debit_adjust', label: 'Debit Adjust', type: 'text' },
+          { name: 'affect_cost_of_goods', label: 'Affect Cost of Goods', type: 'select', options: [{ label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' }], defaultValue: 'No' },
+          { name: 'type', label: 'Type', type: 'select', options: [{ label: 'Add', value: 'Add' }, { label: 'Less', value: 'Less' }], defaultValue: 'Add' },
+          { name: 'debit_side_adjust', label: 'Debit Side Adjust', type: 'select', options: [{ label: 'Supplier', value: 'Supplier' }, { label: 'A/c Head', value: 'A/c Head' }, { label: 'None', value: 'None' }], defaultValue: 'None' },
           { name: 'account_head', label: 'Account Head', type: 'text' },
-          { name: 'credit_adjust', label: 'Credit Adjust', type: 'text' },
+          { name: 'credit_adjust', label: 'Credit Side Adjust', type: 'select', options: [{ label: 'Supplier', value: 'Supplier' }, { label: 'A/c Head', value: 'A/c Head' }, { label: 'None', value: 'None' }], defaultValue: 'None' },
         ]
       },
       {
         title: 'Calculation',
         fields: [
-          { name: 'ded_type', label: 'Deduction Type', type: 'text' },
-          { name: 'calc_type', label: 'Calculation Type', type: 'text' },
+          { name: 'deduction_type', label: 'Deduction Type', type: 'select', options: [{ label: 'Add', value: 'Add' }, { label: 'Less', value: 'Less' }], defaultValue: 'Add' },
+          { name: 'calculation_type', label: 'Deduction Calculation Type', type: 'select', options: [{ label: 'Percentage', value: 'Percentage' }, { label: 'Amount', value: 'Amount' }], defaultValue: 'Percentage' },
+          { name: 'deduction_value', label: 'Deduction Value', type: 'number', defaultValue: 0 },
           { name: 'status', label: 'Status', type: 'select', options: [{ label: 'Active', value: 'Active' }, { label: 'Inactive', value: 'Inactive' }], defaultValue: 'Active' },
         ]
       }
