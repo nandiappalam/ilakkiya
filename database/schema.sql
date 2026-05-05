@@ -687,3 +687,42 @@ INSERT OR IGNORE INTO companies (name, address, gst_number, contact, email) VALU
 INSERT OR IGNORE INTO users (company_id, username, password_hash, role) VALUES
 (1, 'admin', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4beK7xIp.q3qHGKC', 'admin'),
 (1, 'user', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4beK7xIp.q3qHGKC', 'user');
+
+-- Voucher Master Table
+CREATE TABLE IF NOT EXISTS voucher (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    voucher_type TEXT NOT NULL CHECK(voucher_type IN ('Payment', 'Receipt', 'Contra', 'Journal')),
+    voucher_no TEXT UNIQUE NOT NULL,
+    date DATE NOT NULL,
+    reference_no TEXT,
+    narration TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+);
+
+-- Voucher Entry Table
+CREATE TABLE IF NOT EXISTS voucher_entry (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    voucher_id INTEGER NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('Dr','Cr')),
+    ledger_id INTEGER,
+    debit REAL DEFAULT 0 CHECK(debit >= 0),
+    credit REAL DEFAULT 0 CHECK(credit >= 0),
+    remarks TEXT,
+    FOREIGN KEY (voucher_id) REFERENCES voucher(id) ON DELETE CASCADE,
+    FOREIGN KEY (ledger_id) REFERENCES ledgermaster(id)
+);
+
+-- Indexes for voucher tables
+CREATE INDEX IF NOT EXISTS idx_voucher_date ON voucher(date);
+CREATE INDEX IF NOT EXISTS idx_voucher_type_no ON voucher(voucher_type, voucher_no);
+CREATE INDEX IF NOT EXISTS idx_voucher_entry_voucher ON voucher_entry(voucher_id);
+CREATE INDEX IF NOT EXISTS idx_voucher_entry_ledger ON voucher_entry(ledger_id);
+CREATE INDEX IF NOT EXISTS idx_voucher_entry_type ON voucher_entry(type);
+
+-- Sample ledgers for voucher testing (if none exist)
+INSERT OR IGNORE INTO ledgergroupmaster (id, name, printname) VALUES (1, 'Direct Expenses', 'Direct Expenses');
+INSERT OR IGNORE INTO ledgermaster (id, name, under, openingbalance, opening_type, ledger_type) VALUES
+(1, 'Cash', 'Cash-in-Hand', 0, 'Dr', 'Cash'),
+(2, 'Purchase A/c', 'Direct Expenses', 0, 'Dr', 'General'),
+(3, 'Sales A/c', 'Direct Income', 0, 'Cr', 'General');

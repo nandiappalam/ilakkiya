@@ -6,7 +6,8 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import PrintIcon from '@mui/icons-material/Print';
-import { getVehicleMovements, updateVehicleMovement } from './vehicleService';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { getVehicleMovements, updateVehicleMovement, deleteVehicleMovement } from './vehicleService';
 import VehiclePrint from './VehiclePrint';
 
 const statusColors = {
@@ -42,9 +43,21 @@ const VehicleList = () => {
     navigate(`/entry/vehicle-movement-create?id=${id}`);
   };
 
-  const handlePrint = (id) => {
+const handlePrint = (id) => {
     setSelectedId(id);
     setOpenPrint(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this vehicle movement?')) {
+      return;
+    }
+    try {
+      await deleteVehicleMovement(id);
+      loadMovements(); // Reload after delete
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    }
   };
 
   const handleStatusUpdate = async (id, newStatus) => {
@@ -56,11 +69,13 @@ const VehicleList = () => {
     }
   };
 
-  const statusButtons = (currentStatus) => [
-    { label: 'IN', onClick: () => handleStatusUpdate(row.id, 'IN'), disabled: currentStatus === 'IN' },
-    { label: 'LOADED', onClick: () => handleStatusUpdate(row.id, 'LOADED'), disabled: currentStatus === 'LOADED' },
-    { label: 'UNLOADED', onClick: () => handleStatusUpdate(row.id, 'UNLOADED'), disabled: currentStatus === 'UNLOADED' },
-    { label: 'OUT', onClick: () => handleStatusUpdate(row.id, 'OUT'), disabled: currentStatus === 'OUT' }
+  // Note: statusButtons was defined but never used - kept for future reference
+  // eslint-disable-next-line no-unused-vars
+  const statusButtons = (currentStatus, id) => [
+    { label: 'IN', onClick: () => handleStatusUpdate(id, 'IN'), disabled: currentStatus === 'IN' },
+    { label: 'LOADED', onClick: () => handleStatusUpdate(id, 'LOADED'), disabled: currentStatus === 'LOADED' },
+    { label: 'UNLOADED', onClick: () => handleStatusUpdate(id, 'UNLOADED'), disabled: currentStatus === 'UNLOADED' },
+    { label: 'OUT', onClick: () => handleStatusUpdate(id, 'OUT'), disabled: currentStatus === 'OUT' }
   ];
 
   if (loading) return <div>Loading...</div>;
@@ -93,7 +108,8 @@ const VehicleList = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {movements.map((row) => (
+{(Array.isArray(movements) ? movements : []).map((row) => (
+
               <TableRow key={row.id}>
                 <TableCell>{row.id}</TableCell>
                 <TableCell>{row.reference_type} #{row.reference_id}</TableCell>
@@ -109,12 +125,15 @@ const VehicleList = () => {
                     size="small"
                   />
                 </TableCell>
-                <TableCell>
+<TableCell>
                   <IconButton onClick={() => handleEdit(row.id)}>
                     <EditIcon />
                   </IconButton>
                   <IconButton onClick={() => handlePrint(row.id)}>
                     <PrintIcon />
+                  </IconButton>
+                  <IconButton onClick={() => handleDelete(row.id)} color="error">
+                    <DeleteIcon />
                   </IconButton>
                 </TableCell>
               </TableRow>

@@ -477,7 +477,7 @@ async function initializeMasterTables() {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`
     },
-    {
+{
       name: 'users',
       sql: `CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -488,6 +488,26 @@ async function initializeMasterTables() {
         status TEXT DEFAULT 'Active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`
+    },
+    {
+      name: 'vehicle_movements',
+      sql: `CREATE TABLE IF NOT EXISTS vehicle_movements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        reference_type TEXT NOT NULL,
+        reference_id INTEGER,
+        movement_type TEXT,
+        operation_type TEXT,
+        vehicle_no TEXT NOT NULL,
+        driver_name TEXT,
+        transporter_id INTEGER,
+        gate_in_time DATETIME,
+        gate_out_time DATETIME,
+        gross_weight REAL DEFAULT 0,
+        tare_weight REAL DEFAULT 0,
+        net_weight REAL DEFAULT 0,
+        status TEXT DEFAULT 'IN',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`
     }
   ]

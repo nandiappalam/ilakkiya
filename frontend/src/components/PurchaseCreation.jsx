@@ -146,7 +146,6 @@ const PurchaseCreation = () => {
   }
 
   const topFrameFields = [
-    { name: 'bill_no', label: 'Bill No', type: 'text' },
     { name: 'date', label: 'Date', type: 'date' },
     { name: 'pay_type', label: 'Pay Type', type: 'select', options: [{value:'Cash',label:'Cash'},{value:'Credit',label:'Credit'}] },
     { name: 'supplier_id', label: 'Supplier', type: 'masterSelect', masterType: 'suppliers' },

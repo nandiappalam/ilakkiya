@@ -1,144 +1,188 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Box, Typography, TextField, Button, Select, MenuItem, FormControl, 
-  InputLabel, Grid, Card, CardContent 
-} from '@mui/material';
-import { EntryTopFrame, EntryActions } from '../../components/entry';
-import { createVehicleMovement, getMovementConfig } from './vehicleService';
-import { useMasterData } from '../../hooks/useMasterData';
+import SmartField from '../../components/master/SmartField';
+import { safeArray } from '../../utils/safeArray.js';
+import './VehicleCreate.css';
 
 const VehicleCreate = () => {
   const navigate = useNavigate();
-  
-  const [formData, setFormData] = useState({
-    referenceType: 'PURCHASE', // Default
-    referenceId: '',
-    vehicleNo: '',
-    driverName: '',
-    transporterId: '',
-    gateInTime: '',
-    gateOutTime: '',
-    grossWeight: '',
-    tareWeight: '',
-    netWeight: '',
-    status: 'IN'
-  });
 
-  const { data: transports, loading, error } = useMasterData('transports');
+  const [formData, setFormData] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('success');
 
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
+  // Field names use snake_case to match backend SQL column names
+  const config = {
+    sections: [
+      {
+        title: 'Vehicle Details',
+        fields: [
+          { name: 'reference_type', label: 'Reference Type', type: 'select', options: [
+            { value: 'PURCHASE', label: 'Purchase' },
+            { value: 'SALES', label: 'Sales' },
+            { value: 'PURCHASE_RETURN', label: 'Purchase Return' },
+            { value: 'SALES_RETURN', label: 'Sales Return' }
+          ]},
+          { name: 'reference_id', label: 'Reference ID', type: 'number' },
+          { name: 'vehicle_no', label: 'Vehicle No *', type: 'text', required: true },
+          { name: 'driver_name', label: 'Driver Name', type: 'text' },
+          { name: 'transporter_id', label: 'Transporter', type: 'masterSelect', masterType: 'transports' },
+          { name: 'status', label: 'Status', type: 'select', options: [
+            { value: 'IN', label: 'IN' },
+            { value: 'LOADED', label: 'LOADED' },
+            { value: 'UNLOADED', label: 'UNLOADED' },
+            { value: 'OUT', label: 'OUT' }
+          ]}
+        ]
+      },
+      {
+        title: 'Weights',
+        fields: [
+          { name: 'gross_weight', label: 'Gross Weight', type: 'number' },
+          { name: 'tare_weight', label: 'Tare Weight', type: 'number' },
+          { name: 'net_weight', label: 'Net Weight', type: 'number', readOnly: true }
+        ]
+      },
+      {
+        title: 'Gate Times',
+        fields: [
+          { name: 'gate_in_time', label: 'Gate In Time', type: 'datetime-local' },
+          { name: 'gate_out_time', label: 'Gate Out Time', type: 'datetime-local' }
+        ]
+      }
+    ]
+  };
+
+  const sections = safeArray(config.sections);
+
+  const getResetData = () => {
+    const resetData = {};
+    sections.forEach(section => {
+      safeArray(section.fields).forEach(field => {
+        resetData[field.name] = '';
+      });
+    });
+    return resetData;
+  };
+
+  useEffect(() => {
+    setFormData(getResetData());
+  }, []);
+
+const handleChange = (name, value) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleReferenceTypeChange = (e) => {
-    const refType = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      referenceType: refType,
-      referenceId: '', // Reset
-      // Auto-fill movement types
-      ...getMovementConfig(refType)
-    }));
+  const validate = () => {
+    if (!formData.vehicle_no?.trim()) {
+      setMessage('Vehicle No is required');
+      setMessageType('error');
+      return false;
+    }
+    return true;
   };
 
-  const handleSave = async () => {
-    if (!formData.vehicleNo || !formData.referenceId) {
-      alert('Vehicle No and Reference ID required');
-      return;
-    }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setLoading(true);
+    setMessage('');
+
+    const payload = formData;
 
     try {
-      const result = await createVehicleMovement(formData);
-      alert('Vehicle Movement Saved! ID: ' + result.id);
-      navigate('/entry/vehicle-movement-display');
-    } catch (err) {
-      alert('Save failed: ' + err.message);
+      const response = await fetch('/api/vehicle-movements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setMessage('Vehicle Movement saved successfully!');
+        setMessageType('success');
+        setFormData(getResetData());
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        setMessage('Error: ' + (result.message || 'Unknown error'));
+        setMessageType('error');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      setMessage('Error saving vehicle movement');
+      setMessageType('error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const topFields = [
-    { name: 'referenceType', label: 'Reference Type', type: 'select', 
-      options: [
-        { value: 'PURCHASE', label: 'Purchase' },
-        { value: 'SALES', label: 'Sales' },
-        { value: 'PURCHASE_RETURN', label: 'Purchase Return' },
-        { value: 'SALES_RETURN', label: 'Sales Return' }
-      ]
-    },
-    { name: 'referenceId', label: 'Reference ID', type: 'number' },
-    { name: 'vehicleNo', label: 'Vehicle No *', type: 'text' },
-    { name: 'driverName', label: 'Driver Name', type: 'text' },
-    { name: 'transporterId', label: 'Transporter', type: 'masterSelect', masterType: 'transports' },
-    { name: 'status', label: 'Status', type: 'select',
-      options: [
-        { value: 'IN', label: 'IN' },
-        { value: 'LOADED', label: 'LOADED' },
-        { value: 'UNLOADED', label: 'UNLOADED' },
-        { value: 'OUT', label: 'OUT' }
-      ]
-    }
-  ];
-
-  const weightFields = [
-    { name: 'grossWeight', label: 'Gross Weight', type: 'number' },
-    { name: 'tareWeight', label: 'Tare Weight', type: 'number' },
-    { name: 'netWeight', label: 'Net Weight', type: 'number', readOnly: true }
-  ];
-
-  const timeFields = [
-    { name: 'gateInTime', label: 'Gate In Time', type: 'datetime-local' },
-    { name: 'gateOutTime', label: 'Gate Out Time', type: 'datetime-local' }
-  ];
+  const handleCancel = () => {
+    setFormData(getResetData());
+    setMessage('');
+    navigate(-1);
+  };
 
   return (
-    <div className="window">
-      <Typography variant="h4" gutterBottom>Vehicle Movement Create</Typography>
-      
-      {loading && <div>Loading transports...</div>}
-      {error && <div>Error: {error}</div>}
+    <div className="vehicle-create-page">
+      {/* Header */}
+      <div className="vehicle-header">
+        <h2>Vehicle Movement Creation</h2>
+        <div className="vehicle-nav">
+          <button className="btn-nav" onClick={() => navigate('/entry/vehicle-movement-display')}>
+            Go To Vehicle Movement List
+          </button>
+          <button className="btn-nav" onClick={() => navigate(-1)}>
+            Back
+          </button>
+        </div>
+      </div>
 
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <EntryTopFrame 
-            fields={topFields} 
-            data={formData} 
-            onChange={handleFormChange}
-            columns={2}
-          />
-        </CardContent>
-      </Card>
+{message && <div className={`message ${messageType}`}>{message}</div>}
 
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>Weights</Typography>
-          <EntryTopFrame 
-            fields={weightFields} 
-            data={formData} 
-            onChange={handleFormChange}
-            columns={3}
-          />
-        </CardContent>
-      </Card>
+      <form onSubmit={handleSubmit} className="vehicle-form-container">
+        {/* Left Panel - Vehicle Details */}
+        <div className="vehicle-left-panel">
+          <div className="panel-title">Vehicle Details</div>
+          <div className="section-fields">
+            {sections[0].fields.map((field, index) => (
+              <SmartField
+                key={index}
+                field={field}
+                value={formData[field.name]}
+                onChange={handleChange}
+              />
+            ))}
+          </div>
+        </div>
 
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>Gate Times</Typography>
-          <EntryTopFrame 
-            fields={timeFields} 
-            data={formData} 
-            onChange={handleFormChange}
-            columns={2}
-          />
-        </CardContent>
-      </Card>
+        {/* Right Panel - Weights & Times */}
+        <div className="vehicle-right-panel">
+          <div className="panel-title">Weights & Times</div>
+          <div className="section-fields">
+            {sections[1].fields.concat(sections[2].fields).map((field, index) => (
+              <SmartField
+                key={index}
+                field={field}
+                value={formData[field.name]}
+                onChange={handleChange}
+              />
+            ))}
+          </div>
+        </div>
 
-      <EntryActions 
-        onSave={handleSave}
-        loading={loading}
-        saveText="Save Vehicle Movement"
-      />
+        {/* Footer Actions - MOVED INSIDE the form element */}
+        <div className="vehicle-footer-actions">
+          <button type="button" className="btn-cancel" onClick={handleCancel}>
+            Cancel
+          </button>
+          <button type="submit" className="btn-save" disabled={loading}>
+            {loading ? 'Saving...' : 'Save Vehicle Movement'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

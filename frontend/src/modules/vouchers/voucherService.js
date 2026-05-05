@@ -4,10 +4,17 @@
 import api from '../../services/api.js';
 
 export const voucherAPI = {
-  getAll: () => api('/vouchers'),
+  getAll: (filters = {}) => {
+    const params = new URLSearchParams(filters).toString();
+    return api(`/vouchers?${params}`);
+  },
+  get: (id) => api(`/vouchers/${id}`),
   create: (data) => api('vouchers', { method: 'POST', body: data }),
-getLedgers: () => api('/masters/ledgermaster'),
-getLedgerGroups: () => api('ledgergroupmaster')
+  update: (id, data) => api(`vouchers/${id}`, { method: 'PUT', body: data }),
+  previewVoucherNo: (data) => api('vouchers/preview-no', { method: 'POST', body: data }),
+  delete: (id) => api(`vouchers/${id}`, { method: 'DELETE' }),
+  getLedgers: () => api('/masters/ledgermaster'),
+  getLedgerGroups: () => api('/ledgergroupmaster')
 };
 
 export default voucherAPI;

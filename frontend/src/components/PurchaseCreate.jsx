@@ -19,7 +19,6 @@ import {
  */
 const PurchaseCreate = () => {
 const [formData, setFormData] = useState({
-  bill_no: '',
   date: new Date().toISOString().split('T')[0],
   pay_type: 'Credit',
   tax_type: 'Exclusive',
@@ -164,7 +163,6 @@ const getBackendTotals = useCallback(() => {
   // ✅ FIXED Purchase fields - NO 'value', supplier autofill
   const topFrameFields = [
     // Column 1
-    { name: 'bill_no', label: 'Bill No', type: 'text' },
     { name: 'date', label: 'Date', type: 'date' },
     { name: 'pay_type', label: 'Pay Type', type: 'select', options: [
       {value: 'Cash', label: 'Cash'},
@@ -173,6 +171,7 @@ const getBackendTotals = useCallback(() => {
     
     // Column 2: Purchase specific
     { name: 'supplier_id', label: 'Supplier', type: 'masterSelect', masterType: 'suppliers' },
+    { name: 'address', label: 'Address', type: 'text' },
     { name: 'inv_no', label: 'Inv No', type: 'text' },
     { name: 'inv_date', label: 'Inv Date', type: 'date' },
     

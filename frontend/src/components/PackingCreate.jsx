@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import './PackingCreate.css';
 
 // Import modular entry components
@@ -6,10 +6,17 @@ import { EntryTopFrame, EntryItemsTable, EntryActions, EntrySection } from './en
 
 const PackingCreate = () => {
   const [formData, setFormData] = useState({
-    s_no: '',
+    sno: '',
     date: new Date().toISOString().split('T')[0],
     remarks: ''
   });
+
+  // Auto-generate S.No on mount
+  useEffect(() => {
+    // Generate a simple auto number (in real app this would come from API)
+    const autoSno = '1';
+    setFormData(prev => ({ ...prev, sno: autoSno }));
+  }, []);
 
   // Packing From: item dropdown → available lots
   const [packingFrom, setPackingFrom] = useState([
@@ -30,11 +37,21 @@ const PackingCreate = () => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('success');
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+// Handle changes from EntryTopFrame (accepts either event or name/value)
+  const handleChange = (nameOrEvent, value) => {
+    if (typeof nameOrEvent === 'object' && nameOrEvent.target) {
+      // It's an event object
+      setFormData(prev => ({
+        ...prev,
+        [nameOrEvent.target.name]: nameOrEvent.target.value
+      }));
+    } else {
+      // It's name/value from EntryTopFrame
+      setFormData(prev => ({
+        ...prev,
+        [nameOrEvent]: value
+      }));
+    }
   };
 
   // ✅ Functional state updates to prevent race conditions
@@ -74,6 +91,12 @@ const PackingCreate = () => {
     });
   }, []);
 
+const topFrameFields = [
+    { name: 'sno', label: 'S.No', type: 'auto', readOnly: true },
+    { name: 'date', label: 'Date', type: 'date' },
+    { name: 'remarks', label: 'Remarks', type: 'text' },
+  ];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -99,12 +122,6 @@ const PackingCreate = () => {
       setLoading(false);
     }
   };
-
-  const topFrameFields = [
-    { name: 's_no', label: 'S.No', type: 'text' },
-    { name: 'date', label: 'Date', type: 'date' },
-    { name: 'remarks', label: 'Remarks', type: 'text' },
-  ];
 
   // ✅ Packing From columns: item_name dropdown → lot select
   const fromColumns = [
@@ -144,26 +161,27 @@ const PackingCreate = () => {
     <div className="window">
       <div className="screen-title">Packing Create</div>
 
-      {message && <div className={`message ${messageType}`}>{message}</div>}
+      <form onSubmit={handleSubmit}>
+        {message && <div className={`message ${messageType}`}>{message}</div>}
 
-      <EntryTopFrame 
-        fields={topFrameFields} 
-        data={formData} 
-        onChange={handleChange}
-      />
-
-      {/* Packing From: Item dropdown + Available lots */}
-      <EntrySection title="Packing From">
-        <EntryItemsTable 
-          columns={fromColumns}
-          data={packingFrom}
-          onRowChange={handleFromRowChange}
-          onAddRow={() => setPackingFrom(prev => [...prev, { item_name: '', item_id: '', lot_no: '', kg: '' }])}
-          onDeleteRow={(index) => setPackingFrom(prev => prev.filter((_, i) => i !== index))}
-          showActions={true}
-          lotMode="select"
+        <EntryTopFrame 
+          fields={topFrameFields} 
+          data={formData} 
+          onChange={handleChange} 
         />
-      </EntrySection>
+
+        {/* Packing From: Item dropdown + Available lots */}
+        <EntrySection title="Packing From">
+          <EntryItemsTable 
+            columns={fromColumns}
+            data={packingFrom}
+            onRowChange={handleFromRowChange}
+            onAddRow={() => setPackingFrom(prev => [...prev, { item_name: '', item_id: '', lot_no: '', kg: '' }])}
+            onDeleteRow={(index) => setPackingFrom(prev => prev.filter((_, i) => i !== index))}
+            showActions={true}
+            lotMode="select"
+          />
+        </EntrySection>
 
       {/* Packing Material: Item dropdown + Available lots */}
       <EntrySection title="Packing Material">
@@ -191,11 +209,12 @@ const PackingCreate = () => {
         />
       </EntrySection>
 
-      <EntryActions 
-        onSave={handleSubmit}
-        saving={loading}
-        saveText="Save Packing"
-      />
+        <EntryActions 
+          onSave={handleSubmit}
+          saving={loading}
+          saveText="Save Packing"
+        />
+      </form>
     </div>
   );
 };

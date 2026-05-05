@@ -43,30 +43,39 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/vehicle-movements - Create new
 router.post('/', async (req, res) => {
-  const {
-    reference_type,
-    reference_id,
-    movement_type,
-    operation_type,
-    vehicle_no, 
-    driver_name,
-    transporter_id,
-    gate_in_time,
-    gate_out_time,
-    gross_weight = 0,
-    tare_weight = 0,
-    net_weight = 0,
-    status = 'IN'
-  } = req.body
+  // Early check - ensure body exists
+  const body = req.body || {}
+  console.log('POST vehicle-movements body:', JSON.stringify(body))
+  console.log('Request headers:', req.headers['content-type'])
+  
+  const vehicle_no = body?.vehicle_no || body?.vehicleNo
 
-  // Validation
-  if (!reference_type || !reference_id || !vehicle_no) {
+  // Validation - at minimum vehicle_no required
+  if (!vehicle_no) {
     return res.status(400).json({ 
-      error: 'reference_type, reference_id, and vehicle_no are required' 
+      error: 'Vehicle No is required' 
     })
   }
 
   try {
+    console.log('Inserting with vehicle_no:', vehicle_no)
+    
+    // Use explicit values with fallbacks
+    const refType = body?.reference_type || body?.referenceType || null
+    const refId = body?.reference_id || body?.referenceId || null
+    const movType = body?.movement_type || body?.movementType || null
+    const opType = body?.operation_type || body?.operationType || null
+    const driver = body?.driver_name || body?.driverName || null
+    const transporter = body?.transporter_id || body?.transporterId || null
+    const gateIn = body?.gate_in_time || body?.gateInTime || null
+    const gateOut = body?.gate_out_time || body?.gateOutTime || null
+    const grossWt = parseFloat(body?.gross_weight || body?.grossWeight || 0) || 0
+    const tareWt = parseFloat(body?.tare_weight || body?.tareWeight || 0) || 0
+    const netWt = parseFloat(body?.net_weight || body?.netWeight || 0) || 0
+    const stat = body?.status || 'IN'
+    
+    console.log('Parsed values:', { refType, refId, movType, opType, vehicle_no, driver, transporter, grossWt, tareWt, netWt, stat })
+    
     const result = await db.run(`
       INSERT INTO vehicle_movements (
         reference_type, reference_id, movement_type, operation_type,
@@ -75,12 +84,14 @@ router.post('/', async (req, res) => {
         gross_weight, tare_weight, net_weight, status
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      reference_type, reference_id, movement_type, operation_type,
-      vehicle_no, driver_name || null, transporter_id || null,
-      gate_in_time || null, gate_out_time || null,
-      parseFloat(gross_weight), parseFloat(tare_weight), parseFloat(net_weight),
-      status
+      refType, refId, movType, opType,
+      vehicle_no, driver, transporter,
+      gateIn, gateOut,
+      grossWt, tareWt, netWt,
+      stat
     ])
+
+    console.log('Insert result:', result)
 
     res.status(201).json({ 
       success: true, 
