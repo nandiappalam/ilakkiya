@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { calculateRow } from '../../utils/taxCalc';
+
 import { validateEntryConfig } from '../../utils/validateEntryPage';
 import { api, getMasters, getNextLot } from '../../services/api.js';
 import { safeArray } from './safeArray.js';
@@ -35,25 +35,43 @@ const MasterSelectCell = ({ value, valueId, masterType, onChange, rowIndex, cell
     fetchOptions();
   }, [masterType]);
 
+  const safeOptions = Array.isArray(options) ? options : [];
+
   const handleChange = (e) => {
     const selectedId = e.target.value;
-    const selectedOption = options.find(opt => String(opt.id) === selectedId);
-    const displayValue = selectedOption ? (selectedOption.item_name || selectedOption.name || String(selectedOption.id)) : selectedId;
-    console.log('🎯 MasterSelectCell CHANGE:', { cellKey, selectedId, displayValue, selectedOption, totalOptions: options.length });
-    // Pass both ID and display name to parent handler
-    onChange(rowIndex, cellKey, displayValue, selectedId);
+    if (DEBUG) console.log('🎯 MasterSelectCell CHANGE:', { cellKey, selectedId });
+
+    const selectedItem = safeOptions.find(opt => String(opt.id) === String(selectedId));
+    const selectedName = selectedItem?.item_name ?? selectedItem?.name ?? selectedItem?.printname ?? selectedItem?.print_name ?? '';
+
+    if (cellKey === 'item_name') {
+      // When item_name is selected, update both item_id and item_name in a batch
+      onChange(rowIndex, '__batch__', {
+        item_id: selectedItem?.id ?? selectedId,
+        item_name: selectedName,
+        item_label: selectedName, // Keep item_label for consistency if needed elsewhere
+        // Reset other item-related fields when item_name changes
+        lot_no: '',
+        qty: '',
+        weight: '',
+        total_wt: '',
+        available_lots: [],
+        available_lots_loaded: false, // Mark lots as not loaded for the new item
+      });
+      return;
+    }
+    onChange(rowIndex, cellKey, selectedId, selectedId);
   };
 
-  const safeOptions = Array.isArray(options) ? options : [];
-  // Bind select value to the stored ID
   const selectValue = valueId ? String(valueId) : '';
 
   return (
     <select value={selectValue} onChange={handleChange} style={styles.cellInput} disabled={loading} className="table-input">
+      {/* Keep compatibility with existing weight dropdown values: store ID, also keep computed per_unit_weight */}
       <option value="">{loading ? 'Loading...' : '-- Select --'}</option>
       {safeOptions.map((opt) => (
         <option key={opt.id} value={String(opt.id)}>
-          {opt.item_name || opt.name || String(opt.id)}
+          {opt.item_name || opt.name || opt.printname || opt.print_name || String(opt.id)}
         </option>
       ))}
     </select>
@@ -73,16 +91,49 @@ const EntryItemsTable = ({
   taxType = 'Exclusive',
   taxRate = 18
 }) => {
+  const [weightMap, setWeightMap] = useState({});
 
-  const generateLot = async () => {
-    try {
-      const result = await getNextLot();
-      return safeArray(result)[0]?.lot_no || 'LOT001';
-    } catch (err) {
-      console.error('getNextLot failed:', err);
-      return 'LOT001';
-    }
-  };
+
+  // Effect to load available lots when item_id changes for a row
+  useEffect(() => {
+    data.forEach((row, rowIndex) => {
+      // Only load if item_id exists and lots for this item haven't been loaded yet
+      if (row.item_id && !row.available_lots_loaded) {
+        const loadLots = async () => {
+          try {
+            const lots = await api(`/stock/available/${encodeURIComponent(row.item_id)}`);
+            const availableLots = safeArray(lots.data || lots).filter(l => (l.balance_qty || l.remaining_quantity || 0) > 0);
+            onRowChange(rowIndex, '__batch__', { available_lots: availableLots, available_lots_loaded: true });
+            if (DEBUG) console.log(`Loaded ${availableLots.length} lots for "${row.item_name}" (ID: ${row.item_id})`);
+          } catch (err) {
+            console.error(`LOT LOAD ERROR for ${row.item_name} (ID: ${row.item_id}):`, err);
+            onRowChange(rowIndex, '__batch__', { available_lots: [], available_lots_loaded: true });
+          }
+        };
+        loadLots();
+      }
+    });
+  }, [data, onRowChange]); // Depend on data and onRowChange
+
+
+  // Load weight map for numeric calculations (kept for future, not required)
+  useEffect(() => {
+    const loadWeightMap = async () => {
+      try {
+        const result = await getMasters('weights');
+        const weights = safeArray(result?.data || result);
+        const map = {};
+        weights.forEach(w => {
+          map[w.id] = parseFloat(w.weight_value || w.weight || w.value || 0); // Use weight_value or weight from master
+        });
+        setWeightMap(map);
+      } catch (err) {
+        console.error('Weight map load failed:', err);
+      }
+    };
+    loadWeightMap();
+  }, []);
+
 
   // Auto first row
   useEffect(() => {
@@ -103,91 +154,75 @@ const EntryItemsTable = ({
     }
   }, []);
 
-  // Auto lot logic
-  useEffect(() => {
-    if (lotMode === 'auto' && data.length > 0 && !data[0].lot_no) {
-      generateLot().then(lot => {
-        onRowChange(0, 'lot_no', lot);
-      });
-    }
-  }, [lotMode, data.length]);
+
+
+
 
   const normalizeColumns = (columns) => {
     return columns.map(col => ({
       ...col,
       type: col.type || (col.key?.toLowerCase() === 'item_name' ? 'masterSelect' : undefined),
-      masterType: col.masterType || (col.key?.toLowerCase() === 'item_name' ? 'items' : undefined)
+      masterType: col.masterType || (col.key?.toLowerCase() === 'item_name' ? 'items' : undefined),
     }));
   };
 
-  const processedColumns = normalizeColumns(columns);
-  const cleanedColumns = processedColumns.filter(col => {
-    const key = col.key?.toLowerCase();
-    return key !== 's_no' && key !== 'sno' && key !== 'no';
-  });
+  const cleanedColumns = normalizeColumns(columns);
 
-  validateEntryConfig([], processedColumns);
+  validateEntryConfig([], cleanedColumns);
 
-  const isAutoLot = lotMode === 'auto';
+  const handleAddRow = async () => {
+    try {
+      // Always fetch the next lot at the moment of adding the row
+      const res = await api('/masters/lots/next');
 
-  const handleAddRowClick = async () => {
-    let newLot = '';
-    if (isAutoLot) {
-      try {
-        const lotResult = await getNextLot();
-        newLot = safeArray(lotResult)[0]?.lot_no || 'LOTERR';
-      } catch (err) {
-        console.error('Auto lot generation failed:', err);
-        newLot = 'LOTERR';
-      }
+      // Support multiple response shapes
+      const nextLot =
+        res?.lot_no ||
+        res?.data?.lot_no ||
+        res?.data?.lotNo ||
+        '';
+
+      if (DEBUG) console.log('NEXT LOT for new row:', nextLot, 'raw:', res);
+
+      const newRow = {
+        sno: (Array.isArray(data) ? data.length : 0) + 1,
+        
+        item_id: '',
+        item_name: '',
+        item_label: '',
+
+        lot_no: nextLot,
+        // keep a separate computed reference for debugging/state sanity
+        _lot_fetched: nextLot,
+
+
+        qty: 0,
+        weight: 0,
+        rate: 0,
+        disc: 0,
+        tax_rate: 5,
+
+        // Canonical ERP output fields (will be recalculated on edits)
+        per_unit_weight: '',
+        total_weight: 0,
+        base_amount: 0,
+        disc_amount: 0,
+        tax_amount: 0,
+        amount: 0
+      };
+
+      onAddRow(newRow);
+
+    } catch (err) {
+      console.error('Lot generation failed', err);
     }
-
-    const newRow = {
-      item_name: '',
-      item_id: '',
-      lot_no: newLot,
-      qty: '',
-      weight: '',
-      rate: '',
-      disc: '0',
-      tax_rate: taxRate.toString(),
-      amount: 0,
-      tax_amount: 0
-    };
-
-    onAddRow(newRow);
   };
 
-  const handleCellChange = useCallback((rowIndex, key, value, valueId = null) => {
-    if (key === 'item_name') {
-      // Batch all item_name-related updates into a single object to avoid race conditions
-      const updates = {
-        item_name: value,
-        lot_no: '',
-        available_lots: []
-      };
-      if (valueId !== null) {
-        updates.item_name_id = valueId;
-      }
-      onRowChange(rowIndex, '__batch__', updates);
-
-      // Load available lots for this item asynchronously
-      const loadLots = async () => {
-        if (!value) return;
-        try {
-          const lots = await api(`/stock/available/${encodeURIComponent(value)}`);
-          const availableLots = safeArray(lots.data || lots).filter(l => (l.balance_qty || l.remaining_quantity || 0) > 0);
-          onRowChange(rowIndex, '__batch__', { available_lots: availableLots });
-          if (DEBUG) console.log(`Loaded ${availableLots.length} lots for "${value}"`);
-        } catch (err) {
-          console.error(`LOT LOAD ERROR for ${value}:`, err);
-          onRowChange(rowIndex, '__batch__', { available_lots: [] });
-        }
-      };
-      loadLots();
-      return;
+  const handleCellChange = useCallback((rowIndex, key, value) => {
+    if (key === 'weight') {
+      // eslint-disable-next-line no-console
+      console.log('[EntryItemsTable] weight cell change:', { rowIndex, key, value, weightMapValue: weightMap[value] });
     }
-
     // Block lot_no edit in auto mode
     if (lotMode === 'auto' && key === 'lot_no') return;
 
@@ -202,21 +237,52 @@ const EntryItemsTable = ({
       }
     }
 
-    onRowChange(rowIndex, key, value);
-
-    // Recalculate amounts
-    if (['qty', 'rate', 'disc', 'tax_rate'].includes(key) && data[rowIndex]) {
-      const rowData = {
-        qty: parseFloat(data[rowIndex].qty || (key === 'qty' ? value : '')) || 0,
-        rate: parseFloat(data[rowIndex].rate || (key === 'rate' ? value : '')) || 0,
-        disc: parseFloat(data[rowIndex].disc || 0),
-        tax_rate: parseFloat(data[rowIndex].tax_rate || taxRate) || parseFloat(taxRate) || 0
-      };
-      const calc = calculateRow(rowData, taxType, rowData.tax_rate);
-      onRowChange(rowIndex, 'tax_amount', calc.taxAmount);
-      onRowChange(rowIndex, 'amount', calc.totalAmount);
+    // Prepare updates for the current change
+    let updates = {};
+    if (key === '__batch__') {
+      updates = { ...value };
+    } else {
+      updates = { [key]: value };
     }
-  }, [data, onRowChange, lotMode, taxType, taxRate]);
+
+    // Recalculate ERP fields whenever any of: Qty, Per Unit Weight, Rate, Disc%, Tax%
+    const currentRow = { ...data[rowIndex], ...updates };
+    if (currentRow) {
+      const qty = parseFloat(currentRow.qty || 0) || 0;
+      const weightId = currentRow.weight; // dropdown stores ID
+      const perUnitWeight =
+        Number(weightMap[weightId]) ||
+        Number(currentRow.per_unit_weight || 0) ||
+        Number(currentRow.weight || 0) ||
+        0;
+      const rate = parseFloat(currentRow.rate || 0) || 0;
+      const discPercent = parseFloat(currentRow.disc || 0) || 0;
+      const taxPercent = parseFloat(currentRow.tax_rate ?? taxRate) || 0;
+
+      // ✅ ERP formula structure (Qty × Rate)
+      // Total weight should be Qty × Per Unit Wt
+      const totalWeight = qty * perUnitWeight;
+      const baseAmount = qty * rate;
+      const discAmount = baseAmount * (discPercent / 100);
+      const taxableAmount = baseAmount - discAmount;
+      const taxAmount = Number(((taxableAmount * taxPercent) / 100).toFixed(2));
+      const amount = Number((taxableAmount + taxAmount).toFixed(2));
+
+      // Consolidate all calculated fields into the update batch
+      Object.assign(updates, {
+        total_wt: totalWeight,
+        total_weight: totalWeight,
+        base_amount: baseAmount,
+        disc_amount: discAmount,
+        tax_amount: taxAmount,
+        amount: amount,
+        per_unit_weight: perUnitWeight
+      });
+    }
+
+    // Single call to update the parent state
+    onRowChange(rowIndex, '__batch__', updates);
+  }, [data, onRowChange, lotMode, taxRate, weightMap]);
 
   return (
     <div style={styles.sectionContainer}>
@@ -236,6 +302,18 @@ const EntryItemsTable = ({
           {data.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {cleanedColumns.map((col) => {
+                if (col.key === 's_no' || col.key === 'sno') {
+                  return (
+                    <td key={col.key}>
+                      <input 
+                        type="text" 
+                        value={rowIndex + 1} 
+                        readOnly 
+                        style={{...styles.cellInput, backgroundColor: '#f5f5f5', textAlign: 'center'}} 
+                      />
+                    </td>
+                  );
+                }
                 if (col.key === 'lot_no') {
                   if (lotMode === 'auto') {
                     return (
@@ -284,8 +362,8 @@ const EntryItemsTable = ({
                     {editable ? (
                       col.type === 'masterSelect' ? (
                         <MasterSelectCell
-                          value={row[col.key]}
-                          valueId={row[`${col.key}_id`]}
+                          value={row[col.key]} // This is row.item_name
+                          valueId={col.key === 'item_name' ? row.item_id : row[col.key]} // Use row[col.key] as ID for other master selects
                           masterType={col.masterType}
                           onChange={handleCellChange}
                           rowIndex={rowIndex}
@@ -325,17 +403,27 @@ const EntryItemsTable = ({
             </tr>
           ))}
         </tbody>
+        <tfoot>
+          <tr>
+            <td colSpan={cleanedColumns.length + (showActions && editable ? 1 : 0)} style={{ textAlign: 'right', fontWeight: 'bold', padding: '12px', backgroundColor: '#f8f9fa' }}>
+              Total Weight: {data.reduce((sum, row) => sum + parseFloat(row.total_wt || 0), 0).toLocaleString()} KG
+            </td>
+          </tr>
+        </tfoot>
       </table>
+
+
       {showActions && editable && (
         <button
           type="button"
-          onClick={handleAddRowClick}
+          onClick={handleAddRow}
           style={styles.addRowBtn}
           title="Add Row"
         >
           + Add Row
         </button>
       )}
+
     </div>
   );
 };
@@ -391,4 +479,3 @@ const styles = {
 };
 
 export default EntryItemsTable;
-

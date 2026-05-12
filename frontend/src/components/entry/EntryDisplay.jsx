@@ -1,20 +1,11 @@
 import React, { useState, useEffect } from "react";
-import api from "../../utils/api";
+import api from "../../services/api";
 import { safeArray } from "../../utils/safeArray";
 
 /**
  * EntryDisplay - Uniform display component for Entry pages
  * Provides standardized table display with actions (Update, Print, Delete)
  * Styled with Blue & White theme
- * 
- * @param {String} title - Page title
- * @param {String} apiEndpoint - API endpoint for data fetching
- * @param {String} tableName - Table name for Tauri API (alternative to apiEndpoint)
- * @param {Array} columns - Column definitions
- * @param {Function} onEdit - Edit handler
- * @param {Function} customActions - Custom action renderer
- * @param {Function} onAddNew - Add new handler
- * @param {String} addNewLink - Link to create new page
  */
 const EntryDisplay = ({ 
   title = "Display",
@@ -39,31 +30,21 @@ const EntryDisplay = ({
     try {
       let result;
       
-      // Use Tauri API directly if tableName is provided
-      if (tableName) {
-        result = await api.getMasters(tableName);
+      if (tableName && !['purchases', 'sales'].includes(tableName)) {
+result = await api(`/masters/${tableName}`);
+      } else if (apiEndpoint) {
+const response = await api(apiEndpoint);
+        result = response;
       } else {
-        // Fallback to fetch for apiEndpoint (for backward compatibility)
-        const response = await fetch(apiEndpoint);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const text = await response.text();
-        if (!text) {
-          setData([]);
-          setLoading(false);
-          return;
-        }
-        result = JSON.parse(text);
+        setData([]);
+        return;
       }
       
-      // Use safeArray utility to handle multiple response formats
-      const rawData = safeArray(result);
-      
+      const rawData = safeArray(result.data || result);
       setData(rawData);
     } catch (error) {
       console.error("Error fetching data:", error);
-      setMessage("Error loading data - " + (error.message || "API may not be available"));
+      setMessage("Error loading data");
       setMessageType("error");
       setData([]);
     } finally {
@@ -84,8 +65,8 @@ const EntryDisplay = ({
     }
     if (!window.confirm("Delete this record?")) return;
     try {
-      const res = await fetch(`${apiEndpoint}/${id}`, { method: "DELETE" });
-      if (res.ok) {
+const res = await api(`${apiEndpoint || '/api/purchases'}/${id}`, { method: 'DELETE' });
+      if (res.success) {
         setMessage("Record deleted successfully");
         setMessageType("success");
         fetchData();
@@ -118,12 +99,11 @@ const EntryDisplay = ({
         <html>
           <head><title>${title}</title>
           <style>body{font-family:Arial;padding:20px}</style>
-          </head>
-          <body>
-            <h2>${title}</h2>
-            ${tableHtml}
-          </body>
-        </html>
+        </head>
+        <body>
+          <h2>${title}</h2>
+          ${tableHtml}
+        </body>
       `);
       win.document.close();
       win.focus();
@@ -146,17 +126,14 @@ const EntryDisplay = ({
 
   return (
     <div style={styles.container}>
-      {/* Header - Blue Theme */}
       <div style={styles.header}>{title}</div>
 
-      {/* Message */}
       {message && (
         <div style={messageType === 'success' ? styles.successMessage : styles.errorMessage}>
           {message}
         </div>
       )}
 
-      {/* Filter Section - Blue Theme */}
       <div style={styles.filterSection}>
         <div style={styles.filterLeft}>
           <input
@@ -185,7 +162,6 @@ const EntryDisplay = ({
         </div>
       </div>
 
-      {/* Table Section */}
       <div style={styles.tableWrapper}>
         <table style={styles.table}>
           <thead>
@@ -207,7 +183,7 @@ const EntryDisplay = ({
               </tr>
             ) : (
               filteredData.map((row, idx) => (
-                <tr key={row.id || idx}>
+                <tr key={`${row.id ?? 'row'}-${idx}`}>
                   {columns.map((col) => (
                     <td key={col.key} style={styles.td}>
                       {col.render ? col.render(row[col.key], row) : row[col.key]}
@@ -231,7 +207,6 @@ const EntryDisplay = ({
         </table>
       </div>
 
-      {/* Footer with totals */}
       <div style={styles.footer}>
         <div style={styles.footerLeft}>
           Total Records: {filteredData.length}
@@ -251,7 +226,6 @@ const styles = {
     minHeight: '100vh',
     fontFamily: "'Segoe UI', 'Tahoma', Arial, sans-serif"
   },
-  // Header - Blue Theme
   header: {
     background: 'linear-gradient(135deg, #1f4fb2 0%, #2a5ea0 100%)',
     color: 'white',
@@ -276,7 +250,6 @@ const styles = {
     borderRadius: '4px',
     marginBottom: '15px'
   },
-  // Filter Section - Blue Theme
   filterSection: {
     background: '#e9eef7',
     padding: '15px 20px',
@@ -323,7 +296,6 @@ const styles = {
     fontSize: '14px',
     fontWeight: 'bold'
   },
-  // Table Section
   tableWrapper: {
     padding: '0 20px 20px',
     overflow: 'auto',
@@ -334,7 +306,6 @@ const styles = {
     background: '#fff',
     fontSize: '14px',
   },
-  // Blue Theme Table Header
   th: {
     background: '#1f4fb2',
     color: '#fff',
@@ -352,7 +323,6 @@ const styles = {
     textAlign: 'center',
     whiteSpace: 'nowrap',
   },
-  // Blue Theme Action Buttons
   actionBtn: {
     padding: '5px 12px',
     background: '#1f4fb2',
@@ -394,7 +364,6 @@ const styles = {
     padding: '20px',
     color: '#999',
   },
-  // Footer - Blue Theme
   footer: {
     background: '#dbe7fb',
     padding: '12px 20px',

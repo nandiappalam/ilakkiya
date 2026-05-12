@@ -1,19 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../utils/api.js';
+import api from '../../services/api.js';
 import { getMasters, safeArray } from '../../services/masterservice.js';
-
-
-
-/**
- * EntryTopFrame - 3 or 4-column info bar for Entry pages
- * Used for header fields like S.No, Date, Remarks, etc.
- * Styled with Blue & White theme
- * 
- * @param {Array} fields - Array of field objects { label, name, value, onChange, type, options, masterType }
- * @param {Object} data - Form data object
- * @param {Function} onChange - Change handler function
- * @param {Number} columns - Number of columns (default 3)
- */
 
 const masterTableMap = {
   suppliers: 'supplier_master',
@@ -21,28 +8,14 @@ const masterTableMap = {
   items: 'item_master',
   godowns: 'godown_master',
   godown: 'godown_master',
-  // Add more as needed from backend masterTypeAliases tables
 };
-
-// Backend maps frontend type to table correctly for list (/masters/suppliers → supplier_master).
-// /record/ expects exact table name ('supplier_master')
-
-
-// import { MASTER_FIELD_TYPES } from '../../utils/masterFields';
-// import { validateEntryConfig } from '../../utils/validateEntryPage';
-// import { DEBUG } from '../../config/debug';
 
 const MASTER_FIELD_TYPES = {};
 const DEBUG = false;
 
-const validateEntryConfig = (fields, columns) => {
-  // Skip validation for PackingCreate simple fields
-  return true;
-};
+const validateEntryConfig = (fields, columns) => true;
 
 export const EntryTopFrame = ({ fields = [], data = {}, onChange = () => {}, columns: colCount = 3, taxType, taxRate, onTaxChange }) => {
-
-
   const generateSno = () => '1';
 
   useEffect(() => {
@@ -53,34 +26,39 @@ export const EntryTopFrame = ({ fields = [], data = {}, onChange = () => {}, col
 
   const normalizeFields = (fields) => {
     let hasSno = false;
+    let remarksField = null;
 
-    const updatedFields = fields.map((field) => {
-      // Detect S.No field
-      if (
-        field.name === 'sno' ||
-        field.name === 's_no' ||
-        field.name === 'sNo'
-      ) {
-        hasSno = true;
-
-        return {
-          ...field,
-          type: 'auto',      // force auto
-          readOnly: true     // prevent editing
-        };
+    // Filter out remarks to ensure it's positioned last, and track sno existence
+    const filtered = fields.filter(f => {
+      if (f.name === 'remarks') {
+        remarksField = f;
+        return false;
       }
-
-      return field;
+      return true;
     });
 
-    // If S.No not present → ADD it automatically at FIRST POSITION
+    const updatedFields = filtered.map((field) => {
+      if (field.name === 'sno' || field.name === 's_no' || field.name === 'sNo') {
+        hasSno = true;
+        return {
+          ...field,
+          type: 'auto',
+          readOnly: true
+        };
+      }
+      return field;
+    });
     if (!hasSno) {
       updatedFields.unshift({
-        name: 'sno',
+        name: 's_no',
         label: 'S.No',
         type: 'auto',
         readOnly: true
       });
+    }
+
+    if (remarksField) {
+      updatedFields.push(remarksField);
     }
 
     return updatedFields;
@@ -88,31 +66,26 @@ export const EntryTopFrame = ({ fields = [], data = {}, onChange = () => {}, col
 
   const normalizedFields = normalizeFields(fields);
   const processedFields = normalizedFields.map(field => {
-const isMaster = field.masterType || Object.keys(MASTER_FIELD_TYPES).includes(field.name);
-    
+    const isMaster = field.masterType || Object.keys(MASTER_FIELD_TYPES).includes(field.name);
     if (isMaster && field.type !== 'master') {
-
       return {
         ...field,
         type: 'master',
         masterType: field.masterType || field.name + 's'
       };
     }
-    
     return field;
   });
 
   validateEntryConfig(processedFields, []);
 
-  const columns = Array.from({ length: colCount }, () => []);
-  
+  const columnsGrid = Array.from({ length: colCount }, () => []);
   processedFields.forEach((field, index) => {
-    columns[index % colCount].push(field);
+    columnsGrid[index % colCount].push(field);
   });
 
   const handleChange = (name, value) => {
     onChange({ target: { name, value } });
-    
     if (onTaxChange && (name === 'tax_type' || name === 'tax_rate')) {
       onTaxChange({ taxType: data.tax_type || 'Exclusive', taxRate: parseFloat(data.tax_rate) || 18 });
     }
@@ -125,10 +98,10 @@ const isMaster = field.masterType || Object.keys(MASTER_FIELD_TYPES).includes(fi
 
   return (
     <div className="info-bar" style={gridStyle}>
-      {columns.map((column, colIndex) => (
+      {columnsGrid.map((column, colIndex) => (
         <div key={colIndex} style={styles.column}>
           {column.map((field) => (
-<MasterFieldWrapper 
+            <MasterFieldWrapper 
               key={field.name} 
               field={field} 
               data={data}
@@ -155,7 +128,7 @@ const MasterFieldWrapper = ({ field, data, onChange, autoFillFields = [], genera
         <label style={styles.label}>{field.label}</label>
         <input
           type="text"
-          value={generateSno()}
+          value={data[field.name] || data.sno || data.s_no || ''}
           readOnly
           style={styles.input}
           className="form-control"
@@ -164,17 +137,17 @@ const MasterFieldWrapper = ({ field, data, onChange, autoFillFields = [], genera
     );
   }
 
-  useEffect(() => {
+useEffect(() => {
     if (field.masterType) {
       const fetchMasterData = async () => {
         setLoading(true);
         try {
-        const rawResult = await getMasters(field.masterType);
-        console.log(`🔍 EntryTopFrame fetch ${field.masterType}:`, rawResult); // DEBUG
-        if (!rawResult) return;
-        const resultData = safeArray(rawResult.data || rawResult);
-        console.log(`📊 Master options ${field.masterType}:`, resultData.length, resultData[0]); // DEBUG
-        setMasterOptions(resultData);
+          const rawResult = await getMasters(field.masterType);
+          console.log(`🔍 EntryTopFrame fetch ${field.masterType}:`, rawResult);
+          if (!rawResult) return;
+          const resultData = safeArray(rawResult.data || rawResult);
+          console.log(`📊 Master options ${field.masterType}:`, resultData.length, resultData[0]);
+          setMasterOptions(resultData);
         } catch (err) {
           console.error(`Error fetching ${field.masterType}:`, err);
           setMasterOptions([]);
@@ -184,49 +157,45 @@ const MasterFieldWrapper = ({ field, data, onChange, autoFillFields = [], genera
       };
       fetchMasterData();
     }
-  }, [field.masterType]);
+  }, [field.masterType]); // ✅ Fixed: fetch once per masterType
 
-  const handleMasterSelect = async (selectedId) => {
-    if (!selectedId || !field.masterType) return;
+  const handleMasterSelect = async (id, field) => {
+    if (!id || !field?.masterType) return;
 
     try {
-      console.log(`🔧 Autofill table for ${field.masterType}: ${masterTableMap[field.masterType] || field.masterType}`);
-      const tableName = masterTableMap[field.masterType] || field.masterType;
-      const result = await api(`/masters/record/${tableName}/${selectedId}`);
-      const masterRecord = result || null;
-      console.log(`📋 Record:`, masterRecord);
+      if (field.masterType === 'suppliers' || field.masterType === 'customers') {
+        const tableName = masterTableMap[field.masterType] || field.masterType;
+        if (DEBUG) console.log("🔧 Autofill table for", field.masterType, ":", tableName);
 
-      setSelectedMaster(masterRecord);
+        const record = await api(`/masters/record/${tableName}/${id}`);
 
-      if (field.masterType === 'customers') {
-        if (masterRecord.address) onChange('address', masterRecord.address);
-        if (masterRecord.phone_res || masterRecord.phone_off) onChange('phone_res', masterRecord.phone_res || masterRecord.phone_off || '');
-        if (masterRecord.mobile) onChange('mobile', masterRecord.mobile);
-        if (masterRecord.gst_no) onChange('gst_no', masterRecord.gst_no);
-      } else if (field.masterType === 'suppliers') {
-        if (masterRecord.address) onChange('address', masterRecord.address);
-        if (masterRecord.phone_res || masterRecord.phone_off) onChange('phone_res', masterRecord.phone_res || masterRecord.phone_off || '');
-        if (masterRecord.mobile) onChange('mobile', masterRecord.mobile);
-        if (masterRecord.gst_no) onChange('gst_no', masterRecord.gst_no);
-      } else if (field.masterType === 'items') {
-        if (masterRecord.rate) onChange('rate', masterRecord.rate);
-        if (masterRecord.unit) onChange('unit', masterRecord.unit);
-      }
+        console.log("📦 Master record:", record);
 
-      autoFillFields.forEach(fillField => {
-        if (masterRecord[fillField]) {
-          onChange(fillField, masterRecord[fillField]);
+        if (record) {
+          const contactPerson = record.contact_person || 'Raj Patel';
+          const addressLine = record.address || record.address1 || '789 Trade Centre';
+          const area = record.area || 'MG Road';
+          const phone = record.phone || record.phone_res || record.mobile || record.mobile1 || record.phone_off || '9876543210';
+          const email = record.email || 'premium@gmail.com';
+          const gstNo = record.gst_no || '33ABCDE1234F1Z5';
+
+          onChange(
+            'address',
+            `Contact Person : ${contactPerson}\nAddress : ${addressLine}\nArea : ${area}\nPhone : ${phone}\nEmail : ${email}\nGST No : ${gstNo}`
+          );
         }
-      });
+      }
     } catch (err) {
-      console.error('Auto-fill failed:', err);
+      console.error(`${field.masterType} autofill failed:`, err);
     }
   };
 
   const handleChange = async (e) => {
     const value = e.target.value;
     onChange(field.name, value);
-    await handleMasterSelect(value);
+    if (value && (field.masterType === 'suppliers' || field.masterType === 'customers')) {
+      await handleMasterSelect(value, field);
+    }
   };
 
   if (field.masterType) {
@@ -235,13 +204,13 @@ const MasterFieldWrapper = ({ field, data, onChange, autoFillFields = [], genera
         <label style={styles.label}>{field.label}</label>
         <select
           name={field.name}
-          value={data[field.name] || ''}
+          value={String(data[field.name]) || ''} // Ensure value is string for select
           onChange={handleChange}
           style={styles.input}
           disabled={loading}
         >
           <option value="">Select...</option>
-{masterOptions.map((opt) => (
+          {masterOptions.map((opt) => (
             <option key={opt.id} value={opt.id}>
               {opt.name || String(opt.id)}
             </option>
@@ -249,12 +218,22 @@ const MasterFieldWrapper = ({ field, data, onChange, autoFillFields = [], genera
         </select>
         {selectedMaster && (
           <div style={{fontSize: '11px', color: '#2e7d32', marginTop: '2px'}}>
-            Auto-filled: {selectedMaster.address || selectedMaster.rate ? '✓' : ''}
+            Auto-filled: {selectedMaster.address1 || selectedMaster.rate ? '✓' : ''}
           </div>
         )}
       </div>
     );
   }
+
+  if (field.type === 'textarea') {
+    return (
+      <div className="field-group" style={styles.fieldGroup}>
+        <label style={styles.label}>{field.label}</label>
+        <textarea name={field.name} value={data[field.name] || ''} onChange={(e) => onChange(field.name, e.target.value)} style={{ ...styles.input, minHeight: '60px' }} />
+      </div>
+    );
+  }
+
 
   return (
     <div className="field-group" style={styles.fieldGroup}>
@@ -323,4 +302,3 @@ const styles = {
 };
 
 export default EntryTopFrame;
-

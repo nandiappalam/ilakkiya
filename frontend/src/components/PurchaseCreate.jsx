@@ -5,12 +5,12 @@ import { calculateTotals } from '../../utils/taxCalc'
 import './SalesCreate.css'
 
 // Import ALL modular components from entry folder
-import { 
-  EntryTopFrame, 
-  EntryItemsTable, 
-  EntryTotalsRow, 
-  EntryBottomSummary, 
-  EntryActions 
+import {
+  EntryTopFrame,
+  EntryItemsTable,
+  EntryTotalsRow,
+  EntryBottomSummary,
+  EntryActions
 } from './entry';
 
 /**
@@ -90,7 +90,7 @@ const handleRowChange = useCallback((index, key, value) => {
   // Calculate totals for Tauri command
 const getBackendTotals = useCallback(() => {
     const totalQty = rows.reduce((sum, r) => sum + (parseFloat(r.qty) || 0), 0);
-    const totalWeight = rows.reduce((sum, r) => sum + (parseFloat(r.weight) || 0), 0);
+    const totalWeight = rows.reduce((sum, r) => sum + parseFloat(r.weight || 0), 0).toLocaleString();
     const totalAmount = rows.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
     
     let baseAmount = totalAmount;
@@ -132,7 +132,7 @@ const getBackendTotals = useCallback(() => {
         total_wt: parseFloat(r.amount) || 0,
         rate: parseFloat(r.rate) || 0,
         disc: parseFloat(r.disc) || 0,
-        tax: parseFloat(r.tax_rate) || 0,
+        tax: parseFloat(r.tax_rate) || parseFloat(formData.tax_percent) || 0,
         amount: parseFloat(r.amount) || 0
       }))
 
@@ -140,14 +140,26 @@ const getBackendTotals = useCallback(() => {
       
       if (result.success) {
         setSuccess('Purchase created successfully!')
-        setFormData({
-          bill_no: '', date: new Date().toISOString().split('T')[0], pay_type: 'Credit',
-          tax_type: 'Exclusive', type: '', lorry_no: '', p_o_no: '', driver: '',
-          pur_trans: '', remarks: '', customer: '', address: '', sender: '',
-          consigned_to: '', godown_from: '', bill_amt: 0, tax_amt: 0, total_amt: 0,
-          deduction: '', deduction_remarks: '', supplier: '', inv_no: '', inv_date: '', godown: ''
-        })
-        setRows([{}]);
+        // Reset only the PurchaseCreate fields (keeps any auto s_no/lot logic intact)
+        setFormData((prev) => ({
+          ...prev,
+          date: new Date().toISOString().split('T')[0],
+          pay_type: 'Credit',
+          tax_type: 'Exclusive',
+          tax_percent: 5,
+          supplier_id: '',
+          inv_no: '',
+          inv_date: '',
+          godown_id: '',
+          address: '',
+          phone: '',
+          remarks: '',
+          lorry_no: '',
+          p_o_no: '',
+          driver: '',
+          pur_trans: ''
+        }))
+        setRows([]);
         setTimeout(() => setSuccess(''), 3000)
       } else {
         setError(result.message || 'Error creating purchase')
@@ -179,12 +191,13 @@ const getBackendTotals = useCallback(() => {
     { name: 'godown_id', label: 'Godown', type: 'masterSelect', masterType: 'godowns' },
     { name: 'address', label: 'Address', readOnly: true },
     { name: 'phone', label: 'Phone', readOnly: true },
-    { name: 'lorry_no', label: 'Lorry No', type: 'text' },
+/* { name: 'lorry_no', label: 'Lorry No', type: 'text' }, REMOVED */
     { name: 'tax_type', label: 'Tax Type', type: 'select', options: [
       {value: 'Exclusive', label: 'Exclusive'},
       {value: 'Inclusive', label: 'Inclusive'}
     ] },
-    { name: 'tax_percent', label: 'Tax %', type: 'number' }
+/* { name: 'tax', label: 'Tax', type: 'number' }, REMOVED */
+  { name: 'tax_percent', label: 'Tax %', type: 'number' }
   ]
 
   // ✅ FIXED Purchase columns + autoLotMode=true (creation)
@@ -194,8 +207,8 @@ const columns = [
     // 🔥 AUTO LOT: lot_no column simple - NO type:'lotSelect' - EntryItemsTable handles readonly via lotMode="auto"
     { key: 'lot_no', title: 'Lot No' },
     { key: 'qty', title: 'Qty', type: 'number' },
-    { key: 'weight', title: 'Weight', type: 'number' },
-    { key: 'box', title: 'Box', type: 'number' },
+    { key: 'weight', title: 'Weight', type: 'masterSelect', masterType: 'weights' },
+
     { key: 'rate', title: 'Rate', type: 'number' },
     { key: 'disc', title: 'Disc%', type: 'number' },
     { key: 'tax_rate', title: 'Tax%', type: 'number' },
@@ -253,22 +266,11 @@ const columns = [
           taxRate={formData.tax_percent}
         />
 
-        {/* Live totals with weight */}
-        <EntryTotalsRow 
-          totals={[
-            { label: 'Total Qty', value: rows.reduce((sum, r) => sum + (r.qty || 0), 0) },
-            { label: 'Total Weight', value: rows.reduce((sum, r) => sum + (r.weight || 0), 0) },
-            { label: 'Bill Amt', value: totalsData.billAmt, isAmount: true },
-            { label: 'Tax Amt', value: totalsData.taxAmt, isAmount: true },
-            { label: 'Total', value: totalsData.totalAmt, isAmount: true }
-          ]} 
-        />
-
-        <EntryBottomSummary 
+        <EntryBottomSummary
           items={[
-            { label: 'Amount', value: totalsData.billAmt, isAmount: true },
-            { label: 'Tax', value: totalsData.taxAmt, isAmount: true },
-            { label: 'Net Total', value: totalsData.totalAmt, isAmount: true }
+            { label: 'Amount', value: totals.billAmt, isAmount: true },
+            { label: 'Tax', value: totals.taxAmt, isAmount: true },
+            { label: 'Net Total', value: totals.totalAmt, isAmount: true }
           ]}
           deductionFields={deductionFields}
           formData={formData}

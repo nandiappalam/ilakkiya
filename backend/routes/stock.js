@@ -264,7 +264,48 @@ router.get('/available-lots', async (req, res) => {
 // ============================================================================
 // GET AVAILABLE STOCK FOR AN ITEM (for FIFO deduction check)
 // ============================================================================
-router.get('/available/:itemName', async (req, res) => {
+// ============================================================================
+// GET AVAILABLE STOCK FOR AN ITEM (by item_id)
+// Required by ERP modules: returns lots with available_qty > 0
+// Param: itemId
+// ============================================================================
+router.get('/available/:itemId', async (req, res) => {
+  try {
+    const { itemId } = req.params
+
+    const result = await db.query(`
+      SELECT
+        id,
+        item_id,
+        item_name,
+        lot_no,
+        remaining_quantity AS available_qty,
+        rate,
+        created_at
+      FROM stock_lots
+      WHERE item_id = ?
+      AND remaining_quantity > 0
+      ORDER BY id DESC
+    `, [itemId])
+
+    // Keep frontend contract lightweight
+    res.json(result.rows.map(r => ({
+      lot_no: r.lot_no,
+      available_qty: r.available_qty,
+      id: r.id,
+      rate: r.rate,
+      created_at: r.created_at
+    })))
+  } catch (error) {
+    console.error('Error fetching available stock (by item_id):', error)
+    res.status(500).json({ message: 'Error fetching available stock', error: error.message })
+  }
+})
+
+// ============================================================================
+// GET AVAILABLE STOCK FOR AN ITEM (legacy by itemName)
+// ============================================================================
+router.get('/available-item-name/:itemName', async (req, res) => {
   try {
     const { itemName } = req.params
     

@@ -19,6 +19,22 @@ module.exports = async function autoMigrate() {
   console.log('🔧 Running auto-migrations...');
 
   await safeAddColumn('item_master', 'type', "TEXT DEFAULT 'Urad'");
+
+  // Ensure purchase entry compatibility with ERP fields
+  await safeAddColumn('purchases', 'contact_person', 'TEXT');
+  await safeAddColumn('purchases', 'phone', 'TEXT');
+  await safeAddColumn('purchases', 'area', 'TEXT');
+  await safeAddColumn('purchases', 'gst_no', 'TEXT');
+  await safeAddColumn('purchases', 'email', 'TEXT');
+  await safeAddColumn('purchases', 'tax_percent', 'REAL DEFAULT 0');
+  await safeAddColumn('purchases', 'deduction_amount', 'REAL DEFAULT 0');
+
+  await safeAddColumn('purchase_items', 'item_id', 'INTEGER');
+  await safeAddColumn('purchase_items', 'per_unit_weight', 'REAL DEFAULT 0');
+  await safeAddColumn('purchase_items', 'total_weight', 'REAL DEFAULT 0');
+  await safeAddColumn('purchase_items', 'disc_amount', 'REAL DEFAULT 0');
+  await safeAddColumn('purchase_items', 'tax_amount', 'REAL DEFAULT 0');
+
   await safeAddColumn('godown_master', 'contact_person', 'TEXT');
   await safeAddColumn('godown_master', 'address', 'TEXT');
   await safeAddColumn('godown_master', 'phone_off', 'TEXT');

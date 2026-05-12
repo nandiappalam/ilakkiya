@@ -1,23 +1,30 @@
-# Supplier Auto-fill Address Fix
+# Autofill Fix - EntryTopFrame Master Select
 
-**Status: [FULLY IMPLEMENTED]**
+Status: Frontend code correct, cache issue
 
-**Information Gathered:**
-- Backend `/api/masters/suppliers` returns simplified [{id, name}] → no address
-- `/api/masters/record/supplier_master/${id}` returns full record with `address1`
-- EntryTopFrame.jsx `handleMasterSelect`: `const result = await getMasters(tableName)` → simplified, so `masterRecord.address` undefined
-- Backend routes/masters.js line ~230: `getMasters(tableName)` calls same list endpoint
-- PurchaseCreate.jsx topFrameFields has supplier/address in col2, but no autofill
+## Steps
+- [ ] 1. Stop Vite dev server (Ctrl+C)
+- [ ] 2. Delete frontend/node_modules/.vite folder if exists
+- [ ] 3. npm run dev (restart server)
+- [ ] 4. Browser DevTools > Application > Storage > Clear site data
+- [ ] 5. Hard reload (Ctrl+Shift+R)
+- [ ] 6. Test: PurchaseCreate > Select Supplier ABC Traders (id:17)
+  Expected logs:
+  ```
+  🔧 Autofill table for suppliers: supplier_master
+  🌐 FINAL URL: /api/masters/record/supplier_master/17
+  📋 Record: {id:17, name:'ABC Traders', address1:'...', phone_res:'...'}
+  ```
+- [ ] 7. Verify address/phone fields autofill in form
 
-**Plan:**
-- **frontend/src/components/entry/EntryTopFrame.jsx** (MasterFieldWrapper.handleMasterSelect):
-  - Change `await getMasters(tableName)` to `await getMasterRecord(tableName, selectedId)` using `/record/${table}/${id}`
-- Add `getMasterRecord` to services/api.js if missing
-- Test: Select supplier → address autofills
+## Backend Verified ✅
+- /api/masters/suppliers → 24 records OK
+- /api/masters/godowns → 2 records OK
+- /api/masters/record/supplier_master/:id → SELECT * FROM supplier_master WHERE id=?
 
-**Dependent Files:**
-- frontend/src/services/api.js or utils/api.js (add getMasterRecord)
+## Code Status ✅
+- EntryTopFrame.jsx line 195: `await api(...)` (no api2)
+- masterTableMap: 'suppliers' → 'supplier_master' correct
 
-**Followup:**
-- Backend running
-- Refresh, test PurchaseCreate supplier select → address fills
+If still fails after restart, check browser console for bundle source (F12 Sources tab → EntryTopFrame.jsx → search api2)
+

@@ -80,6 +80,16 @@ export async function getNextLot() {
   return result || { lot_no: 'LOT001' };
 }
 
+// ✅ Purchase API - uses existing backend /api/purchases
+export const createPurchase = (formData, items, totals) => 
+  api('/purchases', { 
+    method: 'POST', 
+    body: { formData, items, totals } 
+  });
+
+export const deletePurchase = (id) => api(`/purchases/${id}`, { method: 'DELETE' });
+
+
 // Object export for compatibility
 export default {
   api,

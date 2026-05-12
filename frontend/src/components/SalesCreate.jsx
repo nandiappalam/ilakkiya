@@ -178,7 +178,7 @@ const [rows, setRows] = useState([{}])
   // ✅ CORRECTED: EntryTopFrame fields (NO 'value' prop)
   const topFrameFields = [
     // Column 1: Core fields
-    { name: 'bill_no', label: 'Bill No', type: 'text' },
+    //{ name: 'bill_no', label: 'Bill No', type: 'text' },
     { name: 'date', label: 'Date', type: 'date' },
     { name: 'pay_type', label: 'Pay Type', type: 'select', options: [
       {value: 'Cash', label: 'Cash'},
@@ -186,9 +186,9 @@ const [rows, setRows] = useState([{}])
     ] },
     
     // Column 2: Logistics  
-    { name: 'lorry_no', label: 'Lorry No', type: 'text' },
+    //{ name: 'lorry_no', label: 'Lorry No', type: 'text' },
     { name: 'p_o_no', label: 'P.O No', type: 'text' },
-    { name: 'driver', label: 'Driver', type: 'text' },
+    //{ name: 'driver', label: 'Driver', type: 'text' },
     
     // Column 3: Masters + Tax (autofill address/phone)
     { name: 'customer_id', label: 'Customer', type: 'masterSelect', masterType: 'customers' },
@@ -199,7 +199,7 @@ const [rows, setRows] = useState([{}])
       {value: 'Exclusive', label: 'Exclusive'},
       {value: 'Inclusive', label: 'Inclusive'}
     ] },
-    { name: 'tax_percent', label: 'Tax %', type: 'number' }
+    //{ name: 'tax_percent', label: 'Tax %', type: 'number' }
   ]
 
   // ✅ CORRECT COLUMNS for Sales + lotSelect mode (sales consume lots)
@@ -208,7 +208,7 @@ const columns = [
     { key: 'item_name', title: 'Item', type: 'masterSelect', masterType: 'items' },
     { key: 'lot_no', title: 'Lot No', type: 'lotSelect' },
     { key: 'qty', title: 'Qty', type: 'number' },
-    { key: 'box', title: 'Box', type: 'number' },
+    //{ key: 'box', title: 'Box', type: 'number' },
     { key: 'rate', title: 'Rate', type: 'number' },
     { key: 'disc', title: 'Disc%', type: 'number' },
     { key: 'tax_rate', title: 'Tax%', type: 'number' },
@@ -283,12 +283,12 @@ const columns = [
 
         {/* Live totals */}
         <EntryTotalsRow 
-          totals={[
+          /*totals={[
             { label: 'Total Qty', value: rows.reduce((sum, r) => sum + (r.qty || 0), 0) },
             { label: 'Bill Amt', value: formData.bill_amt, isAmount: true },
             { label: 'Tax Amt', value: formData.tax_amt, isAmount: true },
             { label: 'Total', value: formData.total_amt, isAmount: true }
-          ]} 
+          ]} */
         />
 
         <EntryTotalsRow 

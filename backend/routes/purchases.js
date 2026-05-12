@@ -19,22 +19,87 @@ router.get('/', async (req, res) => {
   }
 })
 
-// GET purchase by ID
+// GET next s_no for purchase creation
+router.get('/next-sno', async (req, res) => { // Ensure this is registered BEFORE router.get('/:id')
+  try {
+    const result = await db.query('SELECT MAX(s_no) as maxSno FROM purchases')
+    const nextSno = (result.rows[0]?.maxSno || 0) + 1
+    res.json({ success: true, data: { s_no: nextSno } })
+  } catch (error) {
+    console.error('Error getting next s_no:', error.message)
+    res.status(500).json({ success: false, message: 'Error getting next s_no', error: error.message })
+  }
+})
+
+// GET purchase list for UI (ERP-grade join)
+router.get('/purchase-list', async (req, res) => {
+  try {
+    const sql = `SELECT
+      p.id,
+      p.inv_no AS invoice_no,
+      p.date AS invoice_date,
+      s.name AS supplier_name,
+      COALESCE(s.address1, p.address, '') AS address,
+      COALESCE(im.item_name, pi.item_name, '') AS item_name,
+      pi.lot_no,
+      pi.per_unit_weight AS weight,
+      pi.total_weight,
+      pi.rate,
+      (pi.qty * pi.rate) AS base_amount,
+      pi.disc_percent,
+      pi.disc_amount,
+      pi.tax_percent,
+      pi.tax_amount,
+      pi.amount,
+      COALESCE(p.deduction_amount, 0) AS total_deduction,
+      (COALESCE(pi.amount, 0) + COALESCE(p.deduction_amount, 0)) AS grand_total
+    FROM purchases p
+    LEFT JOIN supplier_master s ON s.id = p.supplier
+    LEFT JOIN purchase_items pi ON pi.purchase_id = p.id
+    LEFT JOIN item_master im ON im.id = pi.item_id
+    ORDER BY p.id DESC`;
+
+    const result = await db.query(sql);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching purchase list:', error.message);
+    res.status(500).json({ message: 'Error fetching purchase list', error: error.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
-    const purchaseResult = await db.query('SELECT * FROM purchases WHERE id = ?', [req.params.id])
+    const purchaseResult = await db.query('SELECT * FROM purchases WHERE id = ?', [req.params.id]);
     if (purchaseResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Purchase not found' })
+      return res.status(404).json({ message: 'Purchase not found' });
     }
+    const purchaseData = purchaseResult.rows[0];
 
     const itemsResult = await db.query('SELECT * FROM purchase_items WHERE purchase_id = ?', [req.params.id])
+    let deductionsResult = []
+    try {
+      // optional: only if table exists
+      const d = await db.query('SELECT * FROM purchase_deductions WHERE purchase_id = ?', [req.params.id])
+      deductionsResult = d.rows
+    } catch (e) {
+      deductionsResult = []
+    }
+    
+    // Fetch supplier and godown names for display if IDs are stored
+    const supplierName = purchaseData.supplier ? (await db.query('SELECT name FROM supplier_master WHERE id = ?', [purchaseData.supplier])).rows[0]?.name : purchaseData.supplier;
+    const godownName = purchaseData.godown ? (await db.query('SELECT name FROM godown_master WHERE id = ?', [purchaseData.godown])).rows[0]?.name : purchaseData.godown;
+
+    purchaseData.supplier_name = supplierName;
+    purchaseData.godown_name = godownName;
 
     const purchase = {
-      ...purchaseResult.rows[0],
-      items: itemsResult.rows
+      ...purchaseData,
+      items: itemsResult.rows,
+      deductions: deductionsResult
     }
 
     res.json(purchase)
+
   } catch (error) {
     console.error('Error fetching purchase:', error)
     res.status(500).json({ message: 'Error fetching purchase' })
@@ -44,7 +109,7 @@ router.get('/:id', async (req, res) => {
 // POST create new purchase
 router.post('/', async (req, res) => {
   try {
-    const { formData, items, totals } = req.body
+    const { formData, items, totals, deductions } = req.body
 
     // Validation
     if (!formData.date || !formData.supplier || !items || items.length === 0) {
@@ -63,88 +128,123 @@ router.post('/', async (req, res) => {
       totalQty: totals.totalQty || 0
     })
 
+    const invalidItem = items.find(
+      (item) => !item.item_name || Number(item.qty) <= 0 || Number(item.rate) <= 0
+    );
+
+    if (invalidItem) {
+      return res.status(400).json({
+        message: "All items must have a name, positive quantity, and positive rate",
+      });
+    }
+
     const insertValues = [
-      parseInt(formData.sno) || 1, formData.date || new Date().toISOString().slice(0, 10), formData.invNo || '', formData.supplier || '', formData.payType || 'Credit',
-      formData.invDate || null, formData.type || 'Urad', formData.address || '', formData.taxType || 'Exclusive',
-      formData.godown || '', formData.remarks || '', parseFloat(totals.totalQty) || 0, parseFloat(totals.totalWeight) || 0,
-      parseFloat(totals.totalAmount) || 0, parseFloat(totals.baseAmount) || 0, parseFloat(totals.discAmount) || 0, parseFloat(totals.taxAmount) || 0,
-      parseFloat(totals.netAmount) || 0, parseFloat(totals.deductions?.autoWages) || 0, parseFloat(totals.deductions?.vatPercent) || 0,
-      parseFloat(totals.deductions?.vat) || 0, parseFloat(totals.grandTotal) || 0
-    ]
-    console.log('Insert values:', insertValues)
-    console.log('Insert values types:', insertValues.map(v => typeof v))
+      parseInt(formData.sno) || 1,
+      formData.date || new Date().toISOString().slice(0, 10),
+      formData.invNo || '',
+      formData.supplier || '',
+      formData.payType || 'Credit',
+      formData.invDate || null,
+      formData.type || 'Urad',
+      formData.contact_person || '',
+      formData.address || '',
+      formData.area || '',
+      formData.phone || '',
+      formData.gst_no || '',
+      formData.email || '',
+      formData.taxType || 'Exclusive',
+      formData.tax_percent || 0,
+      formData.godown || '',
+      formData.remarks || '',
+      parseFloat(totals.totalQty) || 0,
+      parseFloat(totals.totalWeight) || 0,
+      parseFloat(totals.totalAmount) || 0,
+      parseFloat(totals.baseAmount) || 0,
+      parseFloat(totals.discAmount) || 0,
+      parseFloat(totals.taxAmount) || 0,
+      parseFloat(totals.netAmount) || 0,
+      parseFloat(totals.deductionAmount || totals.deduction_amount) || 0,
+      parseFloat(totals.grandTotal) || 0
+    ];
 
     const purchaseResult = await db.run(`
       INSERT INTO purchases (
-        s_no, date, inv_no, supplier, pay_type, inv_date, type, address,
-        tax_type, godown, remarks, total_qty, total_weight, total_amount,
-        base_amount, disc_amount, tax_amount, net_amount, auto_wages,
-        vat_percent, vat, grand_total
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        s_no, date, inv_no, supplier, pay_type, inv_date, type, contact_person, address, area, phone, gst_no, email, tax_type, tax_percent, godown, remarks, total_qty, total_weight, total_amount, base_amount, disc_amount, tax_amount, net_amount, deduction_amount, grand_total
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, insertValues)
 
-    const purchaseId = purchaseResult.lastID
-    console.log('Purchase inserted with ID:', purchaseId, 'Result:', purchaseResult)
+    const purchaseId = purchaseResult.lastID;
 
-    // Insert purchase items and create stock lots
+    const maxItemIdResult = await db.query('SELECT MAX(id) AS maxId FROM purchase_items')
+    let nextLotSeq = (maxItemIdResult.rows[0]?.maxId || 0) + 1
+
     for (const item of items) {
-      // Insert purchase item
-      await db.run(`
-        INSERT INTO purchase_items (
-          purchase_id, item_name, lot_no, weight, qty, total_wt, rate, disc_percent, tax_percent, amount
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        purchaseId, item.itemName, item.lotNo || '', item.weight || 0, item.qty, item.totalWt || 0,
-        item.rate, item.disc || 0, item.tax || 0, item.amount || 0
-      ])
-      
-      // Auto-generate lot number if not provided
+      const qty = parseFloat(item.qty) || 0
+      const rate = parseFloat(item.rate) || 0
+      const discPercent = parseFloat(item.disc_percent) || 0
+      const taxPercent = parseFloat(item.tax_percent) || 0
+      const perUnitWeight = parseFloat(item.per_unit_weight) || 0
+      const totalWt = Number((item.total_weight || qty * perUnitWeight).toFixed(3));
+
+      const baseAmount = Number((qty * rate).toFixed(2));
+      const discountAmount = Number((item.disc_amount || (baseAmount * discPercent / 100)).toFixed(2));
+      const taxableAmount = Number((baseAmount - discountAmount).toFixed(2));
+      const taxAmount = Number((item.tax_amount || ((formData.taxType === 'Exclusive') ? (taxableAmount * taxPercent / 100) : 0)).toFixed(2));
+
       let lotNo = item.lotNo
       if (!lotNo || lotNo === '') {
-        // Generate lot number: ITEMCODE-YYYYMMDD-SEQ
-        const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-        const itemCode = (item.itemName || 'ITEM').substring(0, 3).toUpperCase()
-        
-        // Get max lot number for this item
-        const maxLotResult = await db.query(`
-          SELECT lot_no FROM stock_lots 
-          WHERE item_name = ? AND lot_no LIKE ?
-          ORDER BY id DESC LIMIT 1
-        `, [item.itemName, `${itemCode}-${today}%`])
-        
-        let seq = 1
-        if (maxLotResult.rows.length > 0) {
-          const lastLot = maxLotResult.rows[0].lot_no
-          const lastSeq = parseInt(lastLot.split('-')[2] || '0')
-          seq = lastSeq + 1
-        }
-        
-        lotNo = `${itemCode}-${today}-${String(seq).padStart(4, '0')}`
+        lotNo = `LOT${String(nextLotSeq++).padStart(4, '0')}`
       }
       
-      // Get item_id from item_master
-      let itemId = null
-      try {
-        const itemResult = await db.query('SELECT id FROM item_master WHERE item_name = ?', [item.itemName])
-        if (itemResult.rows.length > 0) {
-          itemId = itemResult.rows[0].id
+      console.log(`[LOT-GEN] Item: ${item.item_name}, Generated lotNo: "${lotNo}", nextLotSeq before: ${nextLotSeq - 1}`)
+
+      await db.run(`
+        INSERT INTO purchase_items (
+          purchase_id, item_id, item_name, lot_no, per_unit_weight, qty, total_weight, rate, disc_percent, disc_amount, tax_percent, tax_amount, amount
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        purchaseId, item.item_id, item.item_name, lotNo, perUnitWeight, qty, totalWt,
+        rate, discPercent, discountAmount, taxPercent, taxAmount, Number(taxableAmount.toFixed(2))
+      ])
+      
+      // Get item_id from item_master (already have item.item_id from frontend)
+      let itemId = item.item_id
+      // If item_id is not numeric, try to find it from item_master
+      if (isNaN(parseInt(itemId))) {
+        try {
+          const itemResult = await db.query('SELECT id FROM item_master WHERE item_name = ?', [item.item_name])
+          if (itemResult.rows.length > 0) {
+            itemId = itemResult.rows[0].id
+          }
+        } catch (e) {
+          console.log('Item not found in master:', item.item_name)
         }
-      } catch (e) {
-        console.log('Item not found in master:', item.itemName)
       }
       
       // Insert into stock_lots table
       await db.run(`
         INSERT INTO stock_lots (item_id, item_name, lot_no, purchase_id, quantity, remaining_quantity, rate)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-      `, [itemId, item.itemName, lotNo, purchaseId, item.qty || 0, item.qty || 0, item.rate || 0])
+      `, [itemId, item.item_name, lotNo, purchaseId, qty, qty, rate])
       
-    // Also insert into stock table for tracking
+      // Also insert into stock table for tracking
       await db.run(`
         INSERT INTO stock (item_name, lot_no, qty, weight, rate, amount, date, type, reference_id)
         VALUES (?, ?, ?, ?, ?, ?, ?, 'Purchase', ?)
-      `, [item.itemName, lotNo, item.qty || 0, item.weight || 0, item.rate || 0, item.amount || 0, formData.date, purchaseId])
+      `, [item.item_name, lotNo, qty, totalWt, rate, Number(taxableAmount.toFixed(2)), formData.date, purchaseId])
     }
+
+    // Insert purchase deductions
+    for (const ded of deductions) {
+      await db.run(`
+        INSERT INTO purchase_deductions (
+          purchase_id, deduction_id, deduction_name, type, calculation_type, percentage, amount
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [
+        purchaseId, ded.deduction_id, ded.deduction_name, ded.type, ded.calculation_type, ded.percentage, ded.amount
+      ])
+    }
+
 
     // Create ledger entries for the purchase
     try {
@@ -176,41 +276,99 @@ router.post('/', async (req, res) => {
 // PUT update purchase
 router.put('/:id', async (req, res) => {
   try {
-    const { formData, items, totals } = req.body
+    const { formData, items, totals, deductions } = req.body
     const purchaseId = req.params.id
 
     // Update purchase
     await db.run(`
       UPDATE purchases SET
-        s_no = ?, date = ?, inv_no = ?, supplier = ?, pay_type = ?,
-        inv_date = ?, type = ?, address = ?, tax_type = ?, godown = ?,
+        s_no = ?, date = ?, inv_no = ?, supplier = ?, pay_type = ?, 
+        inv_date = ?, type = ?, contact_person = ?, address = ?, area = ?, phone = ?, gst_no = ?, email = ?, tax_type = ?, tax_percent = ?, godown = ?,
         remarks = ?, total_qty = ?, total_weight = ?, total_amount = ?,
         base_amount = ?, disc_amount = ?, tax_amount = ?, net_amount = ?,
-        auto_wages = ?, vat_percent = ?, vat = ?, grand_total = ?,
+        deduction_amount = ?, grand_total = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `, [
-      formData.sno, formData.date, formData.invNo, formData.supplier, formData.payType,
-      formData.invDate, formData.type, formData.address, formData.taxType, formData.godown,
+      formData.sno || formData.s_no, formData.date, formData.invNo || formData.inv_no, formData.supplier || formData.supplier_id, formData.payType || formData.pay_type,
+      formData.invDate, formData.type, formData.contact_person, formData.address, formData.area, formData.phone, formData.gst_no, formData.email, formData.taxType, formData.tax_percent || 0, formData.godown,
       formData.remarks, totals.totalQty, totals.totalWeight, totals.totalAmount,
       totals.baseAmount, totals.discAmount, totals.taxAmount, totals.netAmount,
-      totals.deductions.autoWages, totals.deductions.vatPercent, totals.deductions.vat,
-      totals.grandTotal, purchaseId
+      totals.deductionAmount, totals.grandTotal, purchaseId
     ])
 
     // Delete existing items
+    await db.run('DELETE FROM stock_lots WHERE purchase_id = ?', [purchaseId]);
+    await db.run('DELETE FROM stock WHERE reference_id = ? AND type = ?', [purchaseId, 'Purchase']);
     await db.run('DELETE FROM purchase_items WHERE purchase_id = ?', [purchaseId])
+    // Delete existing deductions
+    await db.run('DELETE FROM purchase_deductions WHERE purchase_id = ?', [purchaseId]);
+
+    // Auto-generate lot numbers sequentially if frontend sends blank lot_no during update
+    const maxItemIdResult = await db.query('SELECT MAX(id) AS maxId FROM purchase_items')
+    let nextLotSeq = (maxItemIdResult.rows[0]?.maxId || 0) + 1
 
     // Insert updated items
     for (const item of items) {
+      const qty = parseFloat(item.qty) || 0
+      const rate = parseFloat(item.rate) || 0
+      const discPercent = parseFloat(item.disc_percent) || 0
+      const taxPercent = parseFloat(item.tax_percent) || 0
+      const perUnitWeight = parseFloat(item.per_unit_weight) || 0
+      const totalWt = parseFloat(item.total_weight || qty * perUnitWeight) || qty * perUnitWeight
+
+      const baseAmount = qty * rate
+      const discountAmount = item.disc_amount || (baseAmount * discPercent / 100)
+      const taxableAmount = baseAmount - discountAmount
+      const taxAmount = item.tax_amount || ((formData.taxType === 'Exclusive') ? (taxableAmount * taxPercent / 100) : 0);
+
+      let lotNo = item.lotNo
+      if (!lotNo || lotNo === '') {
+        lotNo = `LOT${String(nextLotSeq++).padStart(4, '0')}`
+      }
+
       await db.run(`
         INSERT INTO purchase_items (
-          purchase_id, item_name, lot_no, weight, qty, total_wt, rate, disc_percent, tax_percent, amount
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          purchase_id, item_id, item_name, lot_no, per_unit_weight, qty, total_weight, rate, disc_percent, disc_amount, tax_percent, tax_amount, amount
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
-        purchaseId, item.itemName, item.lotNo || '', item.weight, item.qty, item.totalWt,
-        item.rate, item.disc, item.tax, item.amount
+        purchaseId, item.item_id, item.item_name, lotNo, perUnitWeight, qty, totalWt,
+        rate, discPercent, discountAmount, taxPercent, taxAmount, Number(taxableAmount.toFixed(2))
       ])
+
+      // Get item_id from item_master (already have item.item_id from frontend)
+      let itemId = item.item_id
+      // If item_id is not numeric, try to find it from item_master
+      if (isNaN(parseInt(itemId))) {
+        try {
+          const itemResult = await db.query('SELECT id FROM item_master WHERE item_name = ?', [item.item_name])
+          if (itemResult.rows.length > 0) {
+            itemId = itemResult.rows[0].id
+          }
+        } catch (e) {
+          console.log('Item not found in master:', item.item_name)
+        }
+      }
+      
+      // Insert into stock_lots table
+      await db.run(`
+        INSERT INTO stock_lots (item_id, item_name, lot_no, purchase_id, quantity, remaining_quantity, rate)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [itemId, item.item_name, lotNo, purchaseId, qty, qty, rate])
+      
+      // Also insert into stock table for tracking
+      await db.run(`
+        INSERT INTO stock (item_name, lot_no, qty, weight, rate, amount, date, type, reference_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'Purchase', ?)
+      `, [item.item_name, lotNo, qty, totalWt, rate, Number(taxableAmount.toFixed(2)), formData.date, purchaseId])
+    }
+
+    // Insert updated deductions
+    for (const ded of deductions) {
+      await db.run(`
+        INSERT INTO purchase_deductions (purchase_id, deduction_id, deduction_name, type, calculation_type, percentage, amount)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [purchaseId, ded.deduction_id, ded.deduction_name, ded.type, ded.calculation_type, ded.percentage, ded.amount])
     }
 
     res.json({ message: 'Purchase updated successfully!' })
@@ -262,6 +420,9 @@ router.delete('/:id', async (req, res) => {
       console.error('Error deleting purchase ledger entries:', ledgerError)
     }
     
+    // Delete purchase deductions
+    await db.run('DELETE FROM purchase_deductions WHERE purchase_id = ?', [purchaseId]);
+
     // Delete purchase items
     await db.run('DELETE FROM purchase_items WHERE purchase_id = ?', [purchaseId])
     
@@ -273,6 +434,6 @@ router.delete('/:id', async (req, res) => {
     console.error('Error deleting purchase:', error)
     res.status(500).json({ message: 'Error deleting purchase', error: error.message })
   }
-})
+});
 
-module.exports = router
+module.exports = router;

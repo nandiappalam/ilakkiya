@@ -17,7 +17,10 @@ import CrudPage from './components/CrudPage'
 import Navigation from './components/Navigation'
 
 // Entry Pages
-import PurchaseCreationPage from './components/PurchaseCreation'
+import PurchaseCreation from './components/PurchaseCreation'
+
+
+
 import PurchaseDisplay from './components/PurchaseDisplay'
 import GrainsCreation from './components/GrainsCreation'
 import GrainsDisplay from './components/GrainsDisplay'
@@ -213,7 +216,8 @@ const AppLayout = () => {
           <Route path="/features/financial-year" element={<FinancialYearDisplay />} />
 
           {/* Entry Routes */}
-          <Route path="/entry/purchase-create" element={<PurchaseCreationPage />} />
+          <Route path="/entry/purchase-create" element={<PurchaseCreation />} />
+          <Route path="/purchase/edit/:id" element={<PurchaseCreation />} />
           <Route path="/entry/purchase-display" element={<PurchaseDisplay />} />
           <Route path="/entry/grind-create" element={<GrainsCreation />} />
           <Route path="/entry/grind-display" element={<GrainsDisplay />} />

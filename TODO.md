@@ -1,20 +1,8 @@
-# Packing Create Page - Top Fields Fix Complete ✅
+# TODO - ERP Purchase Deduction Layout Fix
 
-**Status**: Done - EntryTopFrame now visible
+- [ ] Fix lot number generation for "Add Row" in `frontend/src/components/entry/EntryItemsTable.jsx`
+- [x] Update Purchase ERP layout in `frontend/src/components/PurchaseCreation.jsx` to match exact structure (LEFT Deductions / RIGHT ERP totals)
+- [ ] Add required CSS classes for `.erp-bottom-layout`, `.deduction-panel`, `.erp-summary-panel`, `.deduction-table`, `.grand-total`
+- [ ] Verify layout orientation and lot uniqueness (LOT0018, LOT0019, LOT0020)
 
-**Changes:**
-- Added S.No (auto), Date (today), Remarks fields
-- Removed all `margin-top` from CSS (150px → 0px for sections, bottom)
-- EntryTopFrame renders immediately after screen-title
 
-**Verification Steps:**
-1. Refresh Packing Create page
-2. EntryTopFrame should be visible right below "Packing Create" title
-3. 3 tables (Packing From, Material, To) should appear below EntryTopFrame
-
-**If still not visible:**
-- Check Console for JS errors
-- Browser dev tools → Elements → `.info-bar` (should exist)
-- Verify `./entry/EntryTopFrame.jsx` imports correctly
-
-**Next:** Test S.No auto-generation and date pre-fill

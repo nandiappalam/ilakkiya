@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS companies (
 DROP TABLE IF EXISTS purchases;
 CREATE TABLE purchases (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+
     s_no INTEGER NOT NULL,
     date DATE NOT NULL,
     inv_no TEXT,
@@ -39,22 +40,68 @@ CREATE TABLE purchases (
     tax_type TEXT DEFAULT 'Exclusive',
     godown TEXT,
     remarks TEXT,
+
     total_qty REAL DEFAULT 0,
     total_weight REAL DEFAULT 0,
-    total_amount REAL DEFAULT 0,
-    base_amount REAL DEFAULT 0,
-    disc_amount REAL DEFAULT 0,
-    tax_amount REAL DEFAULT 0,
-    net_amount REAL DEFAULT 0,
+
+    -- ERP totals (new)
+    gross_amount REAL DEFAULT 0,            -- qty×rate
+    discount_total REAL DEFAULT 0,          -- disc_amount
+    taxable_amount REAL DEFAULT 0,         -- gross - discount
+
+    sgst_amount REAL DEFAULT 0,
+    cgst_amount REAL DEFAULT 0,
+    igst_amount REAL DEFAULT 0,
+
+    tax_total REAL DEFAULT 0,
+
+    net_amount REAL DEFAULT 0,             -- taxable + tax_total
+
+    addition_total REAL DEFAULT 0,
+    deduction_total REAL DEFAULT 0,
+    final_amount REAL DEFAULT 0,
+
+    -- TEMPORARY compatibility mapping (old columns kept)
+    total_amount REAL DEFAULT 0,            -- will mirror gross_amount
+    base_amount REAL DEFAULT 0,             -- mirror gross_amount
+    disc_amount REAL DEFAULT 0,             -- mirror discount_total
+    tax_amount REAL DEFAULT 0,             -- mirror tax_total
     auto_wages REAL DEFAULT 0,
     vat_percent REAL DEFAULT 0,
     vat REAL DEFAULT 0,
-    grand_total REAL DEFAULT 0,
+    grand_total REAL DEFAULT 0,            -- mirror final_amount
+
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Purchase deductions transaction table
+CREATE TABLE IF NOT EXISTS purchase_deductions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    purchase_id INTEGER,
+
+    deduction_purchase_id INTEGER,
+    deduction_name TEXT,
+
+    type TEXT,
+    calc_type TEXT,
+
+    value REAL DEFAULT 0,
+    amount REAL DEFAULT 0,
+
+    affect_cost_of_goods TEXT,
+    debit_side_adjust TEXT,
+    account_head_id INTEGER,
+
+    remarks TEXT,
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE CASCADE
+);
+
 -- Purchase items table
+
 DROP TABLE IF EXISTS purchase_items;
 CREATE TABLE purchase_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

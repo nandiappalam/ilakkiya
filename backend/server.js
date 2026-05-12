@@ -8,7 +8,7 @@ const db = require('./config/database')
 
 const app = express()
 // Render uses PORT env; default to 5000 to match Vite proxy
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 10000
 let actualPort = PORT
 
 // Process-level crash protection (prevents 502s from uncaught errors)
@@ -75,7 +75,9 @@ if (fs.existsSync(frontendPath)) {
 app.use('/Entry', express.static(path.join(__dirname, '../Entry')))
 
 // Routes
-const purchasesRouter = require('./routes/purchases')
+const purchasesRouter = require('./routes/purchases_fixed')
+
+
 const purchaseReturnsRouter = require('./routes/purchaseReturns')
 const grainsRouter = require('./routes/grains')
 const flourOutRouter = require('./routes/flourOut')

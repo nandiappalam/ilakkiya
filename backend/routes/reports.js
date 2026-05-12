@@ -385,9 +385,11 @@ router.get('/supplier-ledger', async (req, res) => {
     const purchaseParams = []
     
     if (supplier_id) {
-      purchaseQuery += ` AND p.supplier_id = ?`
+      // purchases table uses supplier (name) not supplier_id
+      purchaseQuery += ` AND p.supplier = ?`
       purchaseParams.push(supplier_id)
     }
+
     
     if (from_date) {
       purchaseQuery += ` AND p.date >= ?`

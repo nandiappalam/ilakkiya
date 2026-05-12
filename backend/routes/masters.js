@@ -540,15 +540,36 @@ router.delete('/record/:table/:id', async (req, res) => {
   }
 })
 
-// /lots/next - Fallback lot generator
+// /lots/next - Lot generator returns sequential LOT numbers based on existing lots
+// Required response shape: { lot_no: "LOT0007" }
 router.get('/lots/next', async (req, res) => {
   try {
-  const nextLot = "LOT" + Date.now().toString().slice(-4);
-    res.json({ success: true, data: { lot_no: nextLot } });
+    // Prefer stock_lots if present (it persists lots)
+    const stockLotsExists = await db.query("SELECT name FROM sqlite_master WHERE type='table' AND name='stock_lots'");
+    let nextLot = 'LOT0001';
+
+    if (stockLotsExists.rows.length > 0) {
+      const r = await db.query(
+        `SELECT MAX(CAST(SUBSTR(lot_no, 4) AS INTEGER)) AS maxNum FROM stock_lots WHERE lot_no LIKE 'LOT%'`
+      )
+      const maxNum = r.rows[0]?.maxNum || 0
+      nextLot = `LOT${String(maxNum + 1).padStart(4, '0')}`
+    } else {
+      // Fallback: parse from purchase_items.lot_no
+      const r = await db.query(
+        `SELECT MAX(CAST(SUBSTR(lot_no, 4) AS INTEGER)) AS maxNum FROM purchase_items WHERE lot_no LIKE 'LOT%'`
+      )
+      const maxNum = r.rows[0]?.maxNum || 0
+      nextLot = `LOT${String(maxNum + 1).padStart(4, '0')}`
+    }
+
+    return res.json({ lot_no: nextLot });
   } catch (err) {
+    console.error('Error generating next lot number:', err)
     res.status(500).json({ error: err.message });
   }
 });
 
 module.exports = router
+
 
